@@ -1,0 +1,89 @@
+/* --- CONFIGURATION DE BASE --- */
+html { scroll-behavior: smooth; }
+body {
+    margin: 0; padding: 0;
+    background-color: #cbe3fd;
+    font-family: 'Nunito', sans-serif;
+    color: #654178;
+    display: flex;
+    overflow-x: hidden;
+}
+
+/* --- LE MENU LATÉRAL --- */
+.menu {
+    position: fixed; top: 0; left: 0;
+    width: 250px; height: 100vh;
+    background-color: #654178; color: white;
+    padding: 40px 20px;
+    display: flex; flex-direction: column; gap: 15px;
+    z-index: 100;
+    transition: transform 0.3s ease;
+}
+.menu.closed { transform: translateX(-100%); }
+
+.site-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2rem; font-weight: 700;
+    text-align: center; margin-bottom: 20px; color: white;
+}
+.menu-logo { width: 100%; max-width: 150px; height: auto; display: block; margin: 0 auto; }
+.menu-item {
+    color: white; text-decoration: none;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem; text-transform: uppercase;
+}
+
+/* --- ANIMATION DU MENU DÉFILANT --- */
+.toggle-submenu { display: flex; justify-content: space-between; align-items: center; }
+.arrow { font-size: 0.9rem; transition: transform 0.3s ease; }
+.menu-group.open .arrow { transform: rotate(180deg); }
+
+.submenu {
+    display: flex; flex-direction: column; padding-left: 20px;
+    max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
+    transition: max-height 0.4s ease, opacity 0.4s ease, margin-top 0.4s ease;
+}
+.menu-group.open .submenu { max-height: 300px; opacity: 1; margin-top: 10px; }
+.submenu a {
+    color: #cbe3fd; text-decoration: none;
+    font-size: 1.1rem; font-family: 'Nunito', sans-serif;
+    padding: 8px 0; transition: color 0.2s;
+}
+.submenu a:hover { color: white; }
+
+/* --- BOUTON PROFIL EN CERCLE --- */
+.profil {
+    position: fixed; top: 20px; right: 40px;
+    background-color: #654178; color: white;
+    font-family: 'Oswald', sans-serif; font-size: 1.5rem;
+    z-index: 100; width: 60px; height: 60px;
+    border-radius: 50%; display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-decoration: none;
+    transition: transform 0.2s, background-color 0.2s;
+}
+.profil:hover { transform: scale(1.1); background-color: #4a2e5d; }
+
+/* --- BOUTON MENU HAMBURGER --- */
+.menu-toggle {
+    position: fixed; top: 20px; left: 270px; 
+    background-color: #654178; color: white;
+    padding: 10px 15px; font-family: 'Oswald', sans-serif;
+    cursor: pointer; z-index: 101; border-radius: 5px;
+    transition: left 0.3s ease;
+}
+.menu-toggle.shifted { left: 20px; }
+
+/* --- ZONE DE CONTENU --- */
+.contenu-central, .main-container {
+    margin-left: 250px; width: calc(100% - 250px); min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 40px; transition: margin-left 0.3s ease, width 0.3s ease;
+}
+.main-container { padding: 50px; justify-content: flex-start; align-items: flex-start; box-sizing: border-box; }
+.contenu-central.expanded, .main-container.expanded { margin-left: 0; width: 100%; }
+
+/* --- L'IMAGE --- */
+.image {
+    width: 350px; height: 350px; object-fit: cover;
+    border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
