@@ -1,64 +1,119 @@
-<?php session_start(); ?>
+<?php
+session_start();
+require_once 'config/link_bdd_php.php';
+
+// 1. Récupération des pages parentes (les menus principaux)
+$stmt_parents = $pdo->query("SELECT * FROM pages WHERE parent_id IS NULL ORDER BY ordre ASC, date_creation DESC");
+$menus_principaux = $stmt_parents->fetchAll(PDO::FETCH_ASSOC);
+
+// 2. Récupération de toutes les sous-pages (les sous-menus)
+$stmt_enfants = $pdo->query("SELECT * FROM pages WHERE parent_id IS NOT NULL ORDER BY ordre ASC");
+$sous_pages = $stmt_enfants->fetchAll(PDO::FETCH_ASSOC);
+
+// Organisation des sous-pages par ID de parent
+$sous_menus = [];
+foreach ($sous_pages as $sp) {
+    $sous_menus[$sp['parent_id']][] = $sp;
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <title>wikiyogiz - Accueil</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./style/style.css">
+    <title>WikiYogiz - Accueil</title>
+    <link rel="stylesheet" href="style/style.css">
 </head>
-
 <body>
-    <div class="menu-toggle" id="menuToggle">☰ MENU</div>
-    <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 20px;">
-        <a href="./admin/editeur_page.php" class="menu-item" style="font-size: 1rem; color: red; text-transform: none;">
-            + Créer / Éditer une page
-        </a>
-    </div>
-    <nav class="menu" id="sideMenu">
-
-        <a href="index.php" class="menu-item active">
-            <img src="./images/logo_et_slogan.png" alt="Logo" class="menu-logo">
-        </a>
-
-        <div class="menu-group" id="dnaMenuGroup">
-            <a href="#" class="menu-item toggle-submenu">
-                SUPERYOGIZ DNA <span class="arrow">▼</span>
-            </a>
-            <div class="submenu">
-                <a href="./pages/adn.php">OVERVIEW</a>
-                <a href="./pages/adn.php#missions">MISSIONS & PURPOSE</a>
-                <a href="./pages/adn.php#Tagline">TAGLINE & MOTTO</a>
-                <a href="./pages/adn.php#values">VALUES</a>
-                <a href="./pages/adn.php#Graphic_Charter">GRAPHIC CHARTER</a>
-            </div>
+    <header>
+        <!-- Remplacement avec le logo blanc -->
+        <div class="logo-container">
+            <img src="images/logo_et_slogan.png" alt="Logo Blanc WikiYogiz" class="logo-blanc">
         </div>
+        
+        <nav class="nav-bar">
+            <!-- Premier menu (Accueil) - Style en police OSWALD -->
+            <div class="menu-group font-oswald">
+                <a href="index.php" class="menu-item">ACCUEIL</a>
+            </div>
 
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <a href="./admin/dashboard.php" class="menu-item" style="margin-top: 20px; font-size: 1rem; color: #cbe3fd;">Accès Back-Office</a>
-        <?php endif; ?>
-    </nav>
+            <!-- Génération DYNAMIQUE des menus -->
+            <?php foreach ($menus_principaux as $menu): 
+                // Correction orthographique pour le menu SUPERYOGIZ DNA
+                $titre_menu = htmlspecialchars($menu['titre']);
+                if (strtoupper($titre_menu) === 'SUPERYOGIZ DNA') {
+                    $titre_menu = 'SUPERYOGIZ DNA';
+                }
+                ?>
+                <div class="menu-group font-oswald">
+                    <?php if (isset($sous_menus[$menu['id']])): ?>
+                        <!-- Si le menu a des sous-pages, on crée un menu déroulant -->
+                        <a href="#" class="menu-item toggle-submenu">
+                            <?php echo strtoupper($titre_menu); ?> <span class="arrow">▼</span>
+                        </a>
+                        <!-- Les tout derniers sous-menus passent en NUNITO via la classe font-nunito -->
+                        <div class="submenu font-nunito">
+                            <!-- Premier élément du sous-menu en OSWALD (Overview & Graphic Charter) -->
+                            <a href="page.php?slug=<?php echo $menu['slug']; ?>" class="overview-item font-oswald">
+                                OVERVIEW
+                            </a>
+                            
+                            <?php foreach ($sous_menus[$menu['id']] as $sous_item): 
+                                $titre_sous_item = htmlspecialchars($sous_item['titre']);
+                                
+                                // Suppression du "S" de MISSION si présent
+                                if (strtoupper($titre_sous_item) === 'MISSIONS & PURPOSE') {
+                                    $titre_sous_item = 'MISSION & PURPOSE';
+                                }
+                                ?>
+                                <a href="page.php?slug=<?php echo $sous_item['slug']; ?>">
+                                    <?php echo strtoupper($titre_sous_item); ?>
+                                </a>
+                            <?php endforeach; ?>
 
-    <?php if (isset($_SESSION['user_id'])): ?>
-        <a href="./admin/dashboard.php" class="profil">
-            <?php echo strtoupper(substr($_SESSION['nom'], 0, 1)); ?>
-        </a>
-    <?php else: ?>
-        <a href="./config/login.php" class="profil">P</a>
-    <?php endif; ?>
+                            <!-- Ajout manuel de l'élément Graphic Charter en OSWALD si c'est le menu DNA -->
+                            <?php if (strtoupper($menu['titre']) === 'SUPERYOGIZ DNA'): ?>
+                                <a href="page.php?slug=graphic-charter" class="graphic-charter-item font-oswald">
+                                    GRAPHIC CHARTER
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <!-- Si le menu n'a pas de sous-page -->
+                        <a href="page.php?slug=<?php echo $menu['slug']; ?>" class="menu-item">
+                            <?php echo strtoupper($titre_menu); ?>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
 
+            <!-- Espace Admin / Connexion -->
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <div class="menu-group font-oswald">
+                    <a href="admin/dashboard.php" class="menu-item admin-link" style="color: #ffcc00;">ADMIN</a>
+                </div>
+            <?php else: ?>
+                <div class="menu-group font-oswald">
+                    <a href="config/login.php" class="menu-item">CONNEXION</a>
+                </div>
+            <?php endif; ?>
+        </nav>
+    </header>
 
-    <main class="contenu-central" id="mainContent">
-        <h1 class="site-title" style="font-family: 'Oswald', sans-serif;  color: #654178;">WIKIYOGIZ</h1>
-        <h2>PEOPLE FIRST. PERFORMANCE FOLLOWS.</h2>
-        <img src="./images/Tree-pose-Cape.png" alt="Photo d'Hobbi" class="image">
+    <main class="content-wrapper">
+        <section class="hero-section">
+            <!-- Ajout des guillemets obligatoires autour du slogan -->
+            <h1>Bienvenue sur WikiYogiz</h1>
+            <p class="tagline">“People First, Performance Follow”</p>
+        </section>
+
+        <!-- Exemple d'un carré ou d'une section HOBBI (sans ombre) -->
+        <section class="hobbi-square">
+            <h2 class="font-oswald">SECTION HOBBI</h2>
+            <p class="font-nunito">Ce bloc ne possède désormais plus aucune ombre portée sur son contour.</p>
+        </section>
     </main>
 
-    <script src="./script/script.js"></script>
+    <script src="script/script.js"></script>
 </body>
-
 </html>

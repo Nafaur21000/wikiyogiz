@@ -1,0 +1,23 @@
+name: Déploiement automatique sur OVH
+
+on:
+  push:
+    branches:
+      - main  # Le script se déclenche quand vous poussez sur la branche principale
+
+jobs:
+  web-deploy:
+    name: Transfert FTP
+    runs-on: ubuntu-latest
+    steps:
+    - name: Récupérer le code du dépôt
+      uses: actions/checkout@v4
+      
+    - name: Synchronisation FTP vers OVH
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ftp.cluster100.hosting.ovh.net  # Votre serveur FTP OVH
+        username: ${{ secrets.FTP_USERNAME }}    # Votre identifiant FTP
+        password: ${{ secrets.FTP_PASSWORD }}    # Votre mot de passe FTP
+        local-dir: ./                             # Dossier local à envoyer
+        server-dir: ./www/                        # Dossier cible sur OVH (souvent www)
