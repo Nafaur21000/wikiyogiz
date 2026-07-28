@@ -105,6 +105,11 @@ foreach ($sous_pages as $sp) {
             <!-- Ajout des guillemets obligatoires autour du slogan -->
             <h1>Bienvenue sur WikiYogiz</h1>
             <p class="tagline">“People First, Performance Follow”</p>
+            <p>At Superyogiz, we believe clarity is a form of respect.
+
+WikiYogiz exists so no one wastes time searching for answers that already exist — so new collaborators move through **onboarding** with confidence, and every team member stays aligned with the same vision, the same language, the same system.
+
+This is not just documentation. It's how we scale without losing our soul.</p>
         </section>
 
         <!-- Exemple d'un carré ou d'une section HOBBI (sans ombre) -->
