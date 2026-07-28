@@ -1,6 +1,6 @@
 <?php
 // Mettre ici les accès à la base de données fournis par OVH
-$host = 'ftp.cluster100.hosting.ovh.net';
+$host = 'wikiyoz943.mysql.db';
 $dbname = 'wikiyoz943';
 $username = 'wikiyoz943';
 $password = 'TanKiou97';
