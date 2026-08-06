@@ -1,0 +1,5 @@
+config/link_bdd_php.php
+upload/*
+!upload/.gitkeep
+.DS_Store
+Thumbs.db

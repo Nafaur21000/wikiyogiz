@@ -1,26 +1,33 @@
 <?php
-// Désactivation temporaire de la sécurité pour tes tests
-// session_start();
-// if (!isset($_SESSION['user_id'])) die("Accès refusé.");
+require_once '../config/auth.php';
+exiger_connexion();
 
-// Dossier de destination des images
-$upload_dir = '../upload/';
+$upload_dir = __DIR__ . '/../upload/';
+if (!is_dir($upload_dir)) {
+    mkdir($upload_dir, 0755, true);
+}
+
+$autorisees = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf', 'docx', 'xlsx', 'pptx'];
 
 if (isset($_FILES['upload']['name'])) {
-    $file_name = basename($_FILES['upload']['name']);
-    $file_tmp = $_FILES['upload']['tmp_name'];
-    
-    // Déplace l'image du dossier temporaire vers ton dossier upload
-    if (move_uploaded_file($file_tmp, $upload_dir . $file_name)) {
-        $url = '../upload/' . $file_name;
-        // Réponse attendue par CKEditor pour afficher l'image
+    $nom_original = basename($_FILES['upload']['name']);
+    $extension    = strtolower(pathinfo($nom_original, PATHINFO_EXTENSION));
+
+    if (!in_array($extension, $autorisees, true)) {
+        echo json_encode(['uploaded' => 0, 'error' => ['message' => 'Type de fichier non autorisé.']]);
+        exit;
+    }
+
+    $nom_propre = preg_replace('/[^a-zA-Z0-9._-]/', '-', $nom_original);
+    $nom_final  = time() . '-' . $nom_propre;
+
+    if (move_uploaded_file($_FILES['upload']['tmp_name'], $upload_dir . $nom_final)) {
         echo json_encode([
             'uploaded' => 1,
-            'fileName' => $file_name,
-            'url' => $url
+            'fileName' => $nom_final,
+            'url'      => '../upload/' . $nom_final
         ]);
     } else {
-        echo json_encode(['uploaded' => 0, 'error' => ['message' => 'Erreur lors de l\'upload']]);
+        echo json_encode(['uploaded' => 0, 'error' => ['message' => "Erreur lors de l'upload."]]);
     }
 }
-?>

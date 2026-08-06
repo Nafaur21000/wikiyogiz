@@ -1,75 +1,129 @@
-<?php 
-session_start(); 
-require_once '../config/link_bdd_php.php'; 
+<?php
+require_once '../config/auth.php';
+require_once '../config/link_bdd_php.php';
+exiger_connexion();
 
-// LIGNE DÉSACTIVÉE POUR TES TESTS :
-// if (!isset($_SESSION['user_id'])) die("Accès refusé."); 
+$erreur = null;
 
-$page = ['id' => '', 'titre' => '', 'contenu' => '']; 
-// ... garde le reste de ton code tel quel ...
+$page = ['id' => '', 'titre' => '', 'contenu' => '', 'parent_id' => null, 'ordre' => 0, 'slug' => ''];
 
-// Si on modifie une page existante, on la charge depuis la base
+/* ---------- CHARGEMENT D'UNE PAGE EXISTANTE ---------- */
 if (isset($_GET['id'])) {
     $stmt = $pdo->prepare("SELECT * FROM pages WHERE id = ?");
-    $stmt->execute([$_GET['id']]);
-    $page = $stmt->fetch();
-}
-
-// Si on clique sur Sauvegarder
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $titre = $_POST['titre'];
-    $contenu = $_POST['contenu'];
-    // Crée une URL propre (ex: "Ma Super Page" devient "ma-super-page")
-    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $titre)));
-
-    if (!empty($_POST['page_id'])) {
-        $stmt = $pdo->prepare("UPDATE pages SET titre=?, contenu=?, slug=? WHERE id=?");
-        $stmt->execute([$titre, $contenu, $slug, $_POST['page_id']]);
+    $stmt->execute([(int)$_GET['id']]);
+    $trouvee = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($trouvee) {
+        $page = $trouvee;
     } else {
-        $stmt = $pdo->prepare("INSERT INTO pages (titre, contenu, slug) VALUES (?, ?, ?)");
-        $stmt->execute([$titre, $contenu, $slug]);
+        $erreur = "Cette page n'existe pas.";
     }
-    header("Location: pages_gestion.php");
-    exit;
 }
+
+/* ---------- ENREGISTREMENT ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $titre     = trim($_POST['titre']);
+    $contenu   = $_POST['contenu'];
+    $parent_id = ($_POST['parent_id'] === '') ? null : (int)$_POST['parent_id'];
+    $ordre     = (int)$_POST['ordre'];
+    $page_id   = $_POST['page_id'] !== '' ? (int)$_POST['page_id'] : null;
+
+    if ($titre === '') {
+        $erreur = "Le titre est obligatoire.";
+    } elseif ($page_id !== null && $parent_id === $page_id) {
+        $erreur = "Une page ne peut pas être son propre parent.";
+    } else {
+        $slug = slug_unique($pdo, creer_slug($titre), $page_id);
+
+        if ($page_id !== null) {
+            $stmt = $pdo->prepare("UPDATE pages SET titre=?, contenu=?, slug=?, parent_id=?, ordre=? WHERE id=?");
+            $stmt->execute([$titre, $contenu, $slug, $parent_id, $ordre, $page_id]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO pages (titre, contenu, slug, parent_id, ordre) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$titre, $contenu, $slug, $parent_id, $ordre]);
+        }
+
+        header("Location: pages_gestion.php");
+        exit;
+    }
+
+    $page = ['id' => $page_id, 'titre' => $titre, 'contenu' => $contenu,
+             'parent_id' => $parent_id, 'ordre' => $ordre, 'slug' => ''];
+}
+
+/* ---------- LISTE DES PARENTS POSSIBLES ---------- */
+$parents_possibles = $pdo->query("SELECT id, titre FROM pages WHERE parent_id IS NULL ORDER BY ordre ASC, titre ASC")
+                         ->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Éditeur de Page</title>
+    <title><?php echo $page['id'] ? 'Modifier une page' : 'Nouvelle page'; ?> - WikiYogiz</title>
     <link rel="stylesheet" href="../style/style.css">
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
 </head>
-<body style="background-color: white;">
-    <div class="menu">
-        <h2 style="font-family: 'Oswald', sans-serif;">Espace Admin</h2>
-        <a href="pages_gestion.php" class="menu-item" style="font-size: 1rem;">< Retour</a>
-    </div>
+<body class="admin-body">
 
-    <main class="main-container" style="margin-left: 250px; padding: 40px; width: calc(100% - 250px);">
-        <h1 style="font-family: 'Oswald', sans-serif; color: #654178;">
-            <?php echo $page['id'] ? "Modifier la page" : "Créer une nouvelle page"; ?>
-        </h1>
-        
-        <form method="POST" style="display:flex; flex-direction:column; gap: 20px; width: 100%; max-width: 900px;">
-            <input type="hidden" name="page_id" value="<?php echo $page['id']; ?>">
-            
-            <input type="text" name="titre" placeholder="Titre de la page" value="<?php echo htmlspecialchars($page['titre']); ?>" required style="padding: 15px; font-size: 1.5rem; font-family: 'Oswald', sans-serif; border: 1px solid #ccc; border-radius: 5px;">
-            
-            <textarea name="contenu" id="editeur" required><?php echo htmlspecialchars($page['contenu']); ?></textarea>
-            
-            <button type="submit" style="background:#654178; color:white; padding:15px; font-family: 'Oswald', sans-serif; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 5px;">💾 SAUVEGARDER LA PAGE</button>
-        </form>
-    </main>
+<?php include '_menu_admin.php'; ?>
 
-    <script>
-        // On active l'éditeur avancé avec l'option pour uploader des images
-        CKEDITOR.replace('editeur', {
-            filebrowserUploadUrl: 'upload.php',
-            filebrowserUploadMethod: 'form',
-            height: 400
-        });
-    </script>
+<main class="admin-main">
+    <h1><?php echo $page['id'] ? 'Modifier la page' : 'Créer une nouvelle page'; ?></h1>
+
+    <?php if ($erreur): ?><div class="alert alert-error"><?php echo htmlspecialchars($erreur); ?></div><?php endif; ?>
+
+    <form method="POST" class="form-admin">
+        <input type="hidden" name="page_id" value="<?php echo htmlspecialchars((string)$page['id']); ?>">
+
+        <div>
+            <label for="titre">Titre de la page</label>
+            <input type="text" id="titre" name="titre" required
+                   value="<?php echo htmlspecialchars($page['titre']); ?>">
+        </div>
+
+        <div>
+            <label for="parent_id">Emplacement dans le menu</label>
+            <select id="parent_id" name="parent_id">
+                <option value="">— Menu principal (page de premier niveau) —</option>
+                <?php foreach ($parents_possibles as $pp): ?>
+                    <?php if ((string)$pp['id'] === (string)$page['id']) continue; ?>
+                    <option value="<?php echo $pp['id']; ?>"
+                        <?php echo ((string)$page['parent_id'] === (string)$pp['id']) ? 'selected' : ''; ?>>
+                        Sous-menu de : <?php echo htmlspecialchars(strtoupper($pp['titre'])); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <small style="font-family:'Nunito',sans-serif; color:#666;">
+                Le menu et les sous-menus du site se mettent à jour automatiquement.
+            </small>
+        </div>
+
+        <div>
+            <label for="ordre">Ordre d'affichage</label>
+            <input type="number" id="ordre" name="ordre" value="<?php echo (int)$page['ordre']; ?>" style="max-width:150px;">
+            <small style="font-family:'Nunito',sans-serif; color:#666;">
+                Plus le nombre est petit, plus l'entrée apparaît haut dans le menu.
+            </small>
+        </div>
+
+        <div>
+            <label for="editeur">Contenu (texte, images, fichiers)</label>
+            <textarea name="contenu" id="editeur"><?php echo htmlspecialchars($page['contenu']); ?></textarea>
+        </div>
+
+        <div>
+            <button type="submit" class="btn">Sauvegarder la page</button>
+            <a href="pages_gestion.php" class="btn btn-small" style="background:#888;">Annuler</a>
+        </div>
+    </form>
+</main>
+
+<script>
+    CKEDITOR.replace('editeur', {
+        filebrowserUploadUrl: 'upload.php',
+        filebrowserUploadMethod: 'form',
+        height: 420
+    });
+</script>
+<script src="../script/script.js"></script>
 </body>
 </html>

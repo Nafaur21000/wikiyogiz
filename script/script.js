@@ -1,25 +1,32 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const menuToggle = document.getElementById('menuToggle');
-    const sideMenu = document.getElementById('sideMenu');
+document.addEventListener("DOMContentLoaded", function () {
+
+    /* ---- OUVRIR / FERMER LE MENU GLOBAL ---- */
+    const menuToggle  = document.getElementById('menuToggle');
+    const sideMenu    = document.getElementById('sideMenu');
     const mainContent = document.getElementById('mainContent');
-    
-    // Gère TOUS les sous-menus de la page
-    const toggleSubmenus = document.querySelectorAll('.toggle-submenu');
 
     if (menuToggle && sideMenu) {
-        menuToggle.addEventListener('click', function() {
+        menuToggle.addEventListener('click', function () {
             sideMenu.classList.toggle('closed');
             menuToggle.classList.toggle('shifted');
             if (mainContent) mainContent.classList.toggle('expanded');
         });
     }
 
-    // Boucle pour faire fonctionner toutes les flèches déroulantes
-    toggleSubmenus.forEach(function(toggle) {
-        toggle.addEventListener('click', function(event) {
-            event.preventDefault(); 
-            // Ouvre ou ferme le menu-group dans lequel on a cliqué
+    /* ---- MENUS DÉFILANTS ---- */
+    document.querySelectorAll('.toggle-submenu').forEach(function (toggle) {
+        toggle.addEventListener('click', function (event) {
+            event.preventDefault();
             this.parentElement.classList.toggle('open');
+        });
+    });
+
+    /* ---- CONFIRMATION AVANT SUPPRESSION ---- */
+    document.querySelectorAll('[data-confirm]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            if (!confirm(this.getAttribute('data-confirm'))) {
+                e.preventDefault();
+            }
         });
     });
 });
