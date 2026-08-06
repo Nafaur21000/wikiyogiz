@@ -66,7 +66,7 @@ body {
 
 /* --- BOUTON MENU HAMBURGER --- */
 .menu-toggle {
-    position: fixed; top: 20px; left: 270px; 
+    position: fixed; top: 20px; left: 270px;
     background-color: #654178; color: white;
     padding: 10px 15px; font-family: 'Oswald', sans-serif;
     cursor: pointer; z-index: 101; border-radius: 5px;
@@ -87,4 +87,25 @@ body {
 .image {
     width: 350px; height: 350px; object-fit: cover;
     border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+/* --- TAGLINE & TEXTE D'ACCUEIL --- */
+.tagline {
+    font-family: 'Oswald', sans-serif;
+    font-style: italic;
+    font-size: 1.2rem;
+    color: #654178;
+}
+
+/* --- SECTION HOBBI --- */
+.hobbi-section {
+    background-color: white;
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 600px;
+}
+.hobbi-section h2 {
+    font-family: 'Oswald', sans-serif;
+    color: #654178;
+    margin-top: 0;
 }

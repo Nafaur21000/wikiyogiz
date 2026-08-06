@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
         
         <div style="margin-top: 20px; text-align: center;">
-            <a href="index.php" style="color: #654178; text-decoration: none; font-family: Nunito;">Retour à l'accueil</a>
+            <a href="../index.php" style="color: #654178; text-decoration: none; font-family: Nunito;">Retour à l'accueil</a>
         </div>
     </div>
 </body>
