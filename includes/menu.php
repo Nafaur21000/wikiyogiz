@@ -64,9 +64,9 @@ function wy_titre_menu($titre) {
 <button class="menu-toggle" id="menuToggle" aria-label="Ouvrir ou fermer le menu">&#9776;</button>
 
 <?php if (isset($_SESSION['user_id'])): ?>
-    <a href="<?php echo $base; ?>admin/dashboard.php" class="profil" title="Espace admin">
+    <a href="/config/logout.php" class="profil" title="Se déconnecter">
         <?php echo strtoupper(substr($_SESSION['nom'] ?? 'A', 0, 1)); ?>
     </a>
 <?php else: ?>
-    <a href="<?php echo $base; ?>config/login.php" class="profil" title="Connexion">P</a>
+    <a href="/config/login.php" class="profil" title="Connexion">P</a>
 <?php endif; ?>

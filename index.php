@@ -27,17 +27,12 @@ $base = '';
     <img src="images/Tree-pose-Cape.png" alt="Hobbi" class="image-hobbi">
 
     <section class="bloc-objectif">
-        <h2>L'OBJECTIF DE CE WIKI</h2>
+        <h2>At Superyogiz, we believe clarity is a form of respect.</h2>
         <p>
-            WikiYogiz est la mémoire partagée de Superyogiz. Il rassemble en un seul endroit
-            notre ADN, nos missions, nos valeurs et nos repères de marque, pour que personne
-            n'ait à chercher deux fois la même information.
+           WikiYogiz exists so no one wastes time searching for answers that already exist — so new collaborators move through onboarding with confidence, and every team member stays aligned with the same vision, the same language, the same system.
         </p>
         <p>
-            L'idée est simple : rendre l'essentiel accessible à tout le monde, tout de suite.
-            Un nouvel arrivant y trouve de quoi comprendre où il met les pieds, et une équipe
-            déjà en place y retrouve la même version des faits, le même vocabulaire, les mêmes
-            règles du jeu. Chez nous, la clarté est une forme de respect.
+            This is not just documentation. It's how we scale without losing our soul.
         </p>
     </section>
 
