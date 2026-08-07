@@ -17,5 +17,5 @@
         <a href="../index.php" class="menu-item">Voir le site</a>
     </nav>
 
-    <a href="../config/logout.php" class="menu-item" style="margin-top:auto; color:#ff9b9b;">Déconnexion</a>
+    <a href="/config/logout.php" onclick="event.stopPropagation();" style="margin-top:auto; color:#ff9b9b;">Déconnexion</a>
 </aside>
