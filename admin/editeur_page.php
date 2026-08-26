@@ -1,7 +1,13 @@
 <?php
+// ============================================================
+//  ÉDITEUR DE PAGE (création ET modification)
+//    - URL sans ?id=    -> formulaire vide       -> INSERT
+//    - URL avec ?id=12  -> formulaire pré-rempli -> UPDATE
+//  Accessible aux éditeurs et aux administrateurs.
+// ============================================================
 require_once '../config/auth.php';
 require_once '../config/link_bdd_php.php';
-exiger_connexion();
+exiger_editeur();
 
 $erreur = null;
 
@@ -58,6 +64,7 @@ $parents_possibles = $pdo->query("SELECT id, titre FROM pages WHERE parent_id IS
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page['id'] ? 'Modifier une page' : 'Nouvelle page'; ?> - WikiYogiz</title>
     <link rel="stylesheet" href="../style/style.css">
     <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
@@ -106,7 +113,7 @@ $parents_possibles = $pdo->query("SELECT id, titre FROM pages WHERE parent_id IS
         </div>
 
         <div>
-            <label for="editeur">Contenu (texte, images, fichiers)</label>
+            <label for="editeur">Contenu</label>
             <textarea name="contenu" id="editeur"><?php echo htmlspecialchars($page['contenu']); ?></textarea>
         </div>
 
@@ -115,14 +122,128 @@ $parents_possibles = $pdo->query("SELECT id, titre FROM pages WHERE parent_id IS
             <a href="pages_gestion.php" class="btn btn-small" style="background:#888;">Annuler</a>
         </div>
     </form>
+
+    <!-- ============================================================
+         BLOC D'ENVOI DIRECT
+         Indépendant de CKEditor : si son navigateur de fichiers fait
+         des siennes, ce bloc fonctionne toujours. Il envoie le fichier
+         puis l'insère dans l'éditeur, ou donne le lien à copier.
+         Il est HORS du formulaire principal : un formulaire ne peut
+         pas en contenir un autre en HTML.
+         ============================================================ -->
+    <div class="admin-card" style="margin-top:30px;">
+        <h2>Envoyer une image ou un fichier</h2>
+        <p style="font-family:'Nunito',sans-serif; margin-top:0;">
+            Choisis un fichier sur ton ordinateur, puis insère-le à l'endroit du curseur dans le contenu.
+        </p>
+
+        <input type="file" id="fichierLocal" style="font-family:'Nunito',sans-serif;">
+        <button type="button" id="btnEnvoyer" class="btn btn-small" style="margin-left:10px;">Envoyer</button>
+
+        <div id="resultatUpload" style="margin-top:15px; font-family:'Nunito',sans-serif;"></div>
+    </div>
 </main>
 
 <script>
-    CKEDITOR.replace('editeur', {
-        filebrowserUploadUrl: 'upload.php',
-        filebrowserUploadMethod: 'form',
-        height: 420
-    });
+/* ------------------------------------------------------------
+   CONFIGURATION DE CKEDITOR
+   ------------------------------------------------------------ */
+
+// On force les URL telles qu'on les renvoie ("/upload/photo.png") :
+// sans ça CKEditor les réécrirait en chemins relatifs, et les images
+// se casseraient une fois la page affichée à la racine du site.
+CKEDITOR.on('instanceCreated', function () {
+    CKEDITOR.config.baseHref = '/';
+});
+
+/* SUPPRESSION DE L'AJOUT PAR URL
+   Les boîtes "Image" et "Lien" de CKEditor proposent par défaut de
+   coller une adresse. On ouvre directement l'onglet "Envoyer" et on
+   masque le champ URL pour ne laisser que l'envoi depuis le PC. */
+CKEDITOR.on('dialogDefinition', function (ev) {
+    var nom = ev.data.name;
+    var def = ev.data.definition;
+
+    function masquer(ongletId, champs) {
+        var onglet = def.getContents(ongletId);
+        if (!onglet) return;
+        champs.forEach(function (id) {
+            var el = onglet.get(id);
+            if (el) { el.style = 'display:none !important;'; }
+        });
+    }
+
+    if (nom === 'image') {
+        masquer('info', ['txtUrl', 'browse', 'btnUpload']);
+        def.onShow = function () { this.selectPage('Upload'); };
+    }
+
+    if (nom === 'link') {
+        masquer('info', ['linkType', 'urlOptions', 'browse']);
+        def.onShow = function () { this.selectPage('upload'); };
+    }
+});
+
+CKEDITOR.replace('editeur', {
+    height: 420,
+
+    // Branche les onglets "Envoyer" sur notre script admin/upload.php
+    filebrowserUploadUrl:      'upload.php',
+    filebrowserImageUploadUrl: 'upload.php',
+    filebrowserUploadMethod:   'form',
+
+    // Aucune adresse de navigateur de fichiers : le bouton
+    // "Parcourir le serveur" disparaît de lui-même.
+    filebrowserBrowseUrl:      '',
+    filebrowserImageBrowseUrl: ''
+});
+
+/* ------------------------------------------------------------
+   BLOC D'ENVOI DIRECT
+   fetch() envoie le fichier en arrière-plan et lit la réponse JSON
+   renvoyée par upload.php.
+   ------------------------------------------------------------ */
+document.getElementById('btnEnvoyer').addEventListener('click', function () {
+    var input  = document.getElementById('fichierLocal');
+    var sortie = document.getElementById('resultatUpload');
+
+    if (!input.files.length) {
+        sortie.innerHTML = '<span style="color:#a02a1c;">Choisis d\'abord un fichier.</span>';
+        return;
+    }
+
+    var donnees = new FormData();
+    donnees.append('fichier', input.files[0]);
+
+    sortie.textContent = 'Envoi en cours...';
+
+    fetch('upload.php', { method: 'POST', body: donnees })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.uploaded) {
+                sortie.innerHTML = '<span style="color:#a02a1c;">' + (data.error ? data.error.message : 'Échec de l\'envoi.') + '</span>';
+                return;
+            }
+
+            var estImage = /\.(jpe?g|png|gif|webp|svg|avif)$/i.test(data.url);
+
+            sortie.innerHTML =
+                '<span style="color:#1e6b2c;">Fichier envoyé.</span> ' +
+                '<button type="button" class="btn btn-small" id="btnInserer">Insérer dans le contenu</button> ' +
+                '<code style="margin-left:10px;">' + data.url + '</code>';
+
+            document.getElementById('btnInserer').addEventListener('click', function () {
+                var html = estImage
+                    ? '<img src="' + data.url + '" alt="">'
+                    : '<a href="' + data.url + '" target="_blank">' + data.fileName + '</a>';
+                CKEDITOR.instances.editeur.insertHtml(html);
+                sortie.innerHTML = '<span style="color:#1e6b2c;">Inséré dans le contenu.</span>';
+            });
+        })
+        .catch(function () {
+            sortie.innerHTML = '<span style="color:#a02a1c;">Le serveur n\'a pas répondu correctement.</span>';
+        });
+});
 </script>
 <script src="../script/script.js"></script>
 </body>

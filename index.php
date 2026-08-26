@@ -18,7 +18,6 @@ $base = '';
 
 <main class="contenu-central" id="mainContent">
 
-    <img src="images/logo-contour.png" alt="WikiYogiz" class="accueil-logo">
 
     <h1 class="nom-site">WIKIYOGIZ</h1>
 
@@ -36,13 +35,7 @@ $base = '';
         </p>
     </section>
 
-    <section class="hobbi-square">
-        <h2>SECTION HOBBI</h2>
-        <p>
-            Hobbi est notre compagnon de route : il incarne l'esprit Superyogiz au quotidien
-            et guide la lecture de ce wiki.
-        </p>
-    </section>
+   
 
 </main>
 

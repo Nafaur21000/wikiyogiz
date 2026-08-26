@@ -90,9 +90,9 @@ $utilisateurs = $pdo->query("SELECT id, nom_utilisateur, role, date_creation FRO
                         <form method="POST" style="display:inline-flex; gap:6px; align-items:center;">
                             <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
                             <select name="role" style="padding:6px; border-radius:4px; border:1px solid #ccc;">
-                                <option value="lecteur" <?php echo $u['role'] === 'lecteur' ? 'selected' : ''; ?>>Lecteur</option>
-                                <option value="editeur" <?php echo $u['role'] === 'editeur' ? 'selected' : ''; ?>>Éditeur</option>
-                                <option value="admin"   <?php echo $u['role'] === 'admin'   ? 'selected' : ''; ?>>Administrateur</option>
+                                    <option value="lecteur">Lecteur — lit les pages, pas de back-office</option>
+                                    <option value="editeur" selected>Éditeur — crée, modifie et supprime les pages</option>
+                                    <option value="admin">Administrateur — tout, plus la gestion des comptes</option>
                             </select>
                             <button type="submit" name="changer_role" value="1" class="btn btn-small">OK</button>
                         </form>

@@ -1,8 +1,7 @@
 <?php
 require_once '../config/auth.php';
 require_once '../config/link_bdd_php.php';
-exiger_connexion();
-
+exiger_editeur();
 $message = null;
 $erreur  = null;
 

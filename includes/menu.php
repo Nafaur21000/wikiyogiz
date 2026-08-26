@@ -64,9 +64,17 @@ function wy_titre_menu($titre) {
 <button class="menu-toggle" id="menuToggle" aria-label="Ouvrir ou fermer le menu">&#9776;</button>
 
 <?php if (isset($_SESSION['user_id'])): ?>
-    <a href="/config/logout.php" class="profil" title="Se déconnecter">
+    <?php
+    // Destination du bouton profil selon le rôle :
+    //   admin / éditeur -> le back-office
+    //   lecteur         -> déconnexion (il n'a pas de back-office)
+    $lien_profil = in_array($_SESSION['role'] ?? '', ['admin', 'editeur'], true)
+        ? $base . 'admin/dashboard.php'
+        : $base . 'config/logout.php';
+    ?>
+    <a href="<?php echo $lien_profil; ?>" class="profil" title="<?php echo htmlspecialchars($_SESSION['nom'] ?? ''); ?>">
         <?php echo strtoupper(substr($_SESSION['nom'] ?? 'A', 0, 1)); ?>
     </a>
 <?php else: ?>
-    <a href="/config/login.php" class="profil" title="Connexion">P</a>
+    <a href="<?php echo $base; ?>config/login.php" class="profil" title="Connexion">P</a>
 <?php endif; ?>

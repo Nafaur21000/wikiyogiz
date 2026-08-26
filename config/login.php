@@ -1,9 +1,16 @@
 <?php
-session_start();
+// ============================================================
+//  CONNEXION
+//  La destination après connexion dépend du rôle :
+//    admin             -> panneau d'administration
+//    éditeur / lecteur -> page d'accueil du site
+// ============================================================
+require_once 'auth.php';
 require_once 'link_bdd_php.php';
 
-if (isset($_SESSION['user_id'])) {
-    header('Location: ../admin/dashboard.php');
+// Déjà connecté : on n'affiche pas le formulaire une seconde fois.
+if (est_connecte()) {
+    header('Location: ' . destination_apres_connexion(role_actuel()));
     exit;
 }
 
@@ -22,7 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_id'] = $utilisateur['id'];
         $_SESSION['role']    = $utilisateur['role'];
         $_SESSION['nom']     = $utilisateur['nom_utilisateur'];
-        header('Location: ../admin/dashboard.php');
+
+        header('Location: ' . destination_apres_connexion($utilisateur['role']));
         exit;
     }
     $erreur = "Identifiants incorrects.";
