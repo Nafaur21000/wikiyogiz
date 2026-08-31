@@ -25,22 +25,22 @@ if (isset($_POST['creer_user'])) {
     $role        = $_POST['role_user'];
 
     if ($identifiant === '' || $pass === '') {
-        $erreur = "L'identifiant et le mot de passe sont obligatoires.";
+        $erreur = t('users.err_oblig');
     } elseif (!in_array($role, $roles_valides, true)) {
-        $erreur = "Rôle invalide.";
+        $erreur = t('users.err_role');
     } else {
         $verif = $pdo->prepare("SELECT COUNT(*) FROM utilisateurs WHERE nom_utilisateur = ?");
         $verif->execute([$identifiant]);
 
         if ((int)$verif->fetchColumn() > 0) {
-            $erreur = "Cet identifiant est déjà pris.";
+            $erreur = t('users.err_pris');
         } else {
             $stmt = $pdo->prepare(
                 "INSERT INTO utilisateurs (nom_utilisateur, mot_de_passe, role, prenom, nom)
                  VALUES (?, ?, ?, ?, ?)"
             );
             $stmt->execute([$identifiant, password_hash($pass, PASSWORD_DEFAULT), $role, $prenom, $nom]);
-            $message = "Compte « $identifiant » créé.";
+            $message = t('users.cree');
         }
     }
 }
@@ -53,10 +53,10 @@ if (isset($_POST['modifier_user'])) {
     $role   = $_POST['role_mod'];
 
     if (!in_array($role, $roles_valides, true)) {
-        $erreur = "Rôle invalide.";
+        $erreur = t('users.err_role');
     } elseif ($id === (int)$_SESSION['user_id'] && $role !== 'admin') {
         // Garde-fou : le dernier admin ne peut pas se rétrograder
-        $erreur = "Tu ne peux pas retirer ton propre statut d'administrateur.";
+        $erreur = t('users.err_soi_admin');
     } else {
         $pdo->prepare("UPDATE utilisateurs SET prenom = ?, nom = ?, role = ? WHERE id = ?")
             ->execute([$prenom, $nom, $role, $id]);
@@ -67,20 +67,7 @@ if (isset($_POST['modifier_user'])) {
             $_SESSION['nom_famille'] = $nom;
             $_SESSION['role']        = $role;
         }
-        $message = "Compte mis à jour.";
-    }
-}
-
-/* ---------- RÉINITIALISATION DU MOT DE PASSE ---------- */
-if (isset($_POST['reset_pass'])) {
-    $id   = (int)$_POST['user_id'];
-    $pass = $_POST['nouveau_pass'];
-    if ($pass === '') {
-        $erreur = "Le nouveau mot de passe ne peut pas être vide.";
-    } else {
-        $pdo->prepare("UPDATE utilisateurs SET mot_de_passe = ? WHERE id = ?")
-            ->execute([password_hash($pass, PASSWORD_DEFAULT), $id]);
-        $message = "Mot de passe réinitialisé.";
+        $message = t('users.maj');
     }
 }
 
@@ -88,10 +75,10 @@ if (isset($_POST['reset_pass'])) {
 if (isset($_GET['supprimer'])) {
     $id = (int)$_GET['supprimer'];
     if ($id === (int)$_SESSION['user_id']) {
-        $erreur = "Tu ne peux pas supprimer ton propre compte.";
+        $erreur = t('users.err_soi_suppr');
     } else {
         $pdo->prepare("DELETE FROM utilisateurs WHERE id = ?")->execute([$id]);
-        $message = "Compte supprimé.";
+        $message = t('users.supprime');
     }
 }
 
@@ -110,11 +97,11 @@ function ini_user($u) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="<?php echo langue(); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Utilisateurs - WikiYogiz</title>
+    <title><?php echo te('users.titre'); ?> - WikiYogiz</title>
     <link rel="stylesheet" href="../style/style.css">
 </head>
 <body class="admin-body">
@@ -122,19 +109,20 @@ function ini_user($u) {
 <?php include '_menu_admin.php'; ?>
 
 <main class="admin-main">
-    <h1>Utilisateurs et rôles</h1>
+    <h1><?php echo te('users.titre'); ?></h1>
 
     <?php if ($message): ?><div class="alert alert-ok"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
     <?php if ($erreur):  ?><div class="alert alert-error"><?php echo htmlspecialchars($erreur); ?></div><?php endif; ?>
 
+
     <div class="admin-card">
-        <h2>Comptes existants</h2>
+        <h2><?php echo te('users.existants'); ?></h2>
         <table class="admin-table">
             <thead>
                 <tr>
                     <th style="width:60px;"></th>
-                    <th style="width:180px;">Identifiant</th>
-                    <th>Identité, rôle et actions</th>
+                    <th style="width:180px;"><?php echo te('users.col_identifiant'); ?></th>
+                    <th><?php echo te('users.col_identite'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -145,7 +133,7 @@ function ini_user($u) {
 
                     <td>
                         <code><?php echo htmlspecialchars($u['nom_utilisateur']); ?></code>
-                        <?php if ($moi): ?><br><span class="badge">c'est toi</span><?php endif; ?>
+                        <?php if ($moi): ?><br><span class="badge"><?php echo te('users.cest_toi'); ?></span><?php endif; ?>
                     </td>
 
                     <!-- Un formulaire ne peut pas être réparti sur plusieurs
@@ -154,26 +142,22 @@ function ini_user($u) {
                     <td>
                         <form method="POST" class="form-ligne">
                             <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
-                            <input type="text" name="prenom_mod" placeholder="Prénom" value="<?php echo htmlspecialchars($u['prenom']); ?>" style="width:120px;">
-                            <input type="text" name="nom_mod" placeholder="Nom" value="<?php echo htmlspecialchars($u['nom']); ?>" style="width:120px;">
+                            <input type="text" name="prenom_mod" placeholder="<?php echo te('users.prenom'); ?>" value="<?php echo htmlspecialchars($u['prenom']); ?>" style="width:120px;">
+                            <input type="text" name="nom_mod" placeholder="<?php echo te('users.nom'); ?>" value="<?php echo htmlspecialchars($u['nom']); ?>" style="width:120px;">
                             <select name="role_mod">
-                                <option value="lecteur" <?php echo $u['role'] === 'lecteur' ? 'selected' : ''; ?>>Lecteur</option>
-                                <option value="editeur" <?php echo $u['role'] === 'editeur' ? 'selected' : ''; ?>>Éditeur</option>
-                                <option value="admin"   <?php echo $u['role'] === 'admin'   ? 'selected' : ''; ?>>Administrateur</option>
+                                <option value="lecteur" <?php echo $u['role'] === 'lecteur' ? 'selected' : ''; ?>><?php echo te('role.lecteur'); ?></option>
+                                <option value="editeur" <?php echo $u['role'] === 'editeur' ? 'selected' : ''; ?>><?php echo te('role.editeur'); ?></option>
+                                <option value="admin"   <?php echo $u['role'] === 'admin'   ? 'selected' : ''; ?>><?php echo te('role.admin'); ?></option>
                             </select>
-                            <button type="submit" name="modifier_user" value="1" class="btn btn-small">Enregistrer</button>
+                            <button type="submit" name="modifier_user" value="1" class="btn btn-small"><?php echo te('commun.enregistrer'); ?></button>
                         </form>
 
-                        <form method="POST" class="form-ligne" style="margin-top:8px;">
-                            <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
-                            <input type="password" name="nouveau_pass" placeholder="Nouveau mot de passe" style="width:190px;">
-                            <button type="submit" name="reset_pass" value="1" class="btn btn-small" style="background:#888;">Réinitialiser</button>
-
-                            <?php if (!$moi): ?>
+                        <?php if (!$moi): ?>
+                            <div style="margin-top:8px;">
                                 <a href="?supprimer=<?php echo $u['id']; ?>" class="btn btn-small btn-danger"
-                                   data-confirm="Supprimer le compte « <?php echo htmlspecialchars($u['nom_utilisateur'], ENT_QUOTES); ?> » ?">Supprimer le compte</a>
-                            <?php endif; ?>
-                        </form>
+                                   data-confirm="<?php echo te('users.confirm_suppr'); ?>"><?php echo te('users.suppr_compte'); ?></a>
+                            </div>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -182,30 +166,31 @@ function ini_user($u) {
     </div>
 
     <div class="admin-card">
-        <h2>Créer un compte</h2>
+        <h2><?php echo te('users.creer'); ?></h2>
         <form method="POST" class="form-admin" style="max-width:460px;">
             <div class="ligne-champs">
-                <div><label for="prenom">Prénom</label><input type="text" id="prenom" name="prenom"></div>
-                <div><label for="nom">Nom</label><input type="text" id="nom" name="nom"></div>
+                <div><label for="prenom"><?php echo te('users.prenom'); ?></label><input type="text" id="prenom" name="prenom"></div>
+                <div><label for="nom"><?php echo te('users.nom'); ?></label><input type="text" id="nom" name="nom"></div>
             </div>
             <div>
-                <label for="identifiant">Identifiant de connexion</label>
+                <label for="identifiant"><?php echo te('users.identifiant_lbl'); ?></label>
                 <input type="text" id="identifiant" name="identifiant" required>
-                <small>C'est ce que la personne saisira pour se connecter.</small>
+                <small><?php echo te('users.identifiant_aide'); ?></small>
             </div>
             <div>
-                <label for="mot_de_passe">Mot de passe</label>
-                <input type="password" id="mot_de_passe" name="mot_de_passe" required>
+                <label for="mot_de_passe"><?php echo te('users.mdp_temporaire'); ?></label>
+                <input type="password" id="mot_de_passe" name="mot_de_passe" required minlength="8">
+                <small><?php echo te('users.mdp_aide'); ?></small>
             </div>
             <div>
-                <label for="role_user">Rôle</label>
+                <label for="role_user"><?php echo te('users.role'); ?></label>
                 <select id="role_user" name="role_user">
-                    <option value="lecteur">Lecteur — lit les pages, pas de back-office</option>
-                    <option value="editeur" selected>Éditeur — crée, modifie et supprime les pages</option>
-                    <option value="admin">Administrateur — tout, plus les comptes et les pages verrouillées</option>
+                    <option value="lecteur"><?php echo te('users.role_lecteur'); ?></option>
+                    <option value="editeur" selected><?php echo te('users.role_editeur'); ?></option>
+                    <option value="admin"><?php echo te('users.role_admin'); ?></option>
                 </select>
             </div>
-            <div><button type="submit" name="creer_user" value="1" class="btn">Créer le compte</button></div>
+            <div><button type="submit" name="creer_user" value="1" class="btn"><?php echo te('users.bouton_creer'); ?></button></div>
         </form>
     </div>
 </main>

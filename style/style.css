@@ -8,6 +8,7 @@
     --violet-fonce: #4a2e5d;
     --bleu: #cbe3fd;
     --rose: #d97ba0;
+    --rose-fonce: #b25579;
     --vert: #26602f;
     --largeur-menu: 260px;
 }
@@ -211,7 +212,7 @@ h1, h2, h3, h4, h5, h6 {
     transition: background 0.15s;
 }
 .profil-menu a:hover { background: var(--bleu); }
-.profil-menu .profil-deconnexion { color: #c0392b; }
+.profil-menu .profil-deconnexion { color: var(--rose); }
 
 /* Pastille d'initiales, réutilisée dans le back-office */
 .pastille-initiales {
@@ -415,8 +416,8 @@ h1, h2, h3, h4, h5, h6 {
     transition: background 0.2s;
 }
 .btn:hover { background: var(--violet-fonce); }
-.btn-danger { background: #c0392b; }
-.btn-danger:hover { background: #96271b; }
+.btn-danger { background: var(--rose); }
+.btn-danger:hover { background: var(--rose-fonce); }
 .btn-small { padding: 6px 12px; font-size: 0.9rem; }
 .btn-fleche { padding: 6px 10px; background: #7a7a8c; }
 .btn-fleche.inactif { opacity: 0.3; cursor: default; }
@@ -464,8 +465,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .alert { padding: 14px 18px; border-radius: 8px; font-family: 'Nunito', sans-serif; margin-bottom: 20px; }
 .alert-ok    { background: #e2f5e6; color: #1e6b2c; }
-.alert-error { background: #fbe3e0; color: #a02a1c; }
-
+.alert-error { background: var(--rose-clair); color: var(--rose-fonce); }
 /* ============================================================
    ÉDITEUR DE PAGE
    ============================================================ */
@@ -509,7 +509,42 @@ h1, h2, h3, h4, h5, h6 {
 }
 .editeur-barre button:hover { background: var(--bleu); border-color: var(--violet); }
 .editeur-barre button.actif { background: var(--violet); color: white; }
+/* ============================================================
+   REDIMENSIONNEMENT DES IMAGES
+   Pas de panneau : huit poignées apparaissent autour de l'image
+   quand on clique dessus, il suffit d'en tirer une.
+   ============================================================ */
 
+/* L'image sur laquelle on travaille */
+.editeur-zone img { cursor: pointer; }
+.editeur-zone img.image-selectionnee {
+    outline: 2px solid var(--rose);
+    outline-offset: 2px;
+}
+
+/* Les poignées. Elles vivent dans <body> et sont placées en
+   position:fixed d'après la position réelle de l'image à l'écran :
+   elles ne font jamais partie du contenu enregistré. */
+.poignee-image {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;      /* centre le carré sur le point visé */
+    background: var(--rose);
+    border: 2px solid #ffffff;
+    border-radius: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    z-index: 900;
+    display: none;
+}
+.poignee-image:hover { background: var(--rose-fonce); }
+
+/* Pendant le glissement : pas de curseur texte, pas de sélection
+   accidentelle du texte autour de l'image. */
+body.redimensionnement {
+    user-select: none;
+    -webkit-user-select: none;
+}
 /* LA GRANDE ZONE D'ÉCRITURE */
 .editeur-zone {
     min-height: 600px;
@@ -588,3 +623,58 @@ h1, h2, h3, h4, h5, h6 {
     .profil { width: 50px; height: 50px; font-size: 1.1rem; }
     .editeur-zone, .editeur-html { min-height: 400px; padding: 20px; }
 }
+
+/* ============================================================
+   LANGUES
+   ============================================================ */
+
+/* Pastille EN / FR dans les menus */
+.drapeau {
+    display: inline-block;
+    background: var(--violet);
+    color: #ffffff;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+.profil-langue { border-top: 1px solid #eee; }
+.profil-langue .drapeau { background: var(--rose); }
+
+/* Bascule sur la page de connexion */
+.choix-langue { text-align: center; margin-top: 18px; }
+.choix-langue a {
+    color: var(--violet);
+    text-decoration: none;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+}
+.choix-langue a:hover { text-decoration: underline; }
+
+/* ============================================================
+   ONGLETS FRANÇAIS / ANGLAIS DANS L'ÉDITEUR
+   ============================================================ */
+.onglets-langue {
+    display: flex;
+    gap: 6px;
+    border-bottom: 2px solid var(--violet);
+    margin-bottom: 5px;
+}
+.onglets-langue .onglet {
+    background: #e8ebf3;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    padding: 12px 22px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    color: var(--violet);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.onglets-langue .onglet:hover { background: var(--bleu); }
+.onglets-langue .onglet.actif { background: var(--violet); color: #ffffff; }
+.onglets-langue .onglet.actif .drapeau { background: var(--rose); }

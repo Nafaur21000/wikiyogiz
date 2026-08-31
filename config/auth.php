@@ -1,17 +1,17 @@
 <?php
 // ============================================================
 //  SÉCURITÉ, RÔLES ET IDENTITÉ
-//  Inclus en première ligne de chaque page d'administration.
 //
 //  TROIS RÔLES :
-//    lecteur  -> lit les pages publiques, aucun accès au back-office
+//    lecteur  -> lit les pages, aucun accès au back-office
 //    editeur  -> crée / modifie / supprime les pages ordinaires
 //    admin    -> tout ça, plus les utilisateurs et les pages verrouillées
+//
+//  Ce fichier charge aussi la couche de langue : toute page qui
+//  inclut auth.php dispose donc de t() et de langue().
 // ============================================================
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/lang.php';
 
 /* ------------------------------------------------------------
    LECTURE DU RÔLE
@@ -19,6 +19,13 @@ if (session_status() === PHP_SESSION_NONE) {
 
 function role_actuel() {
     return $_SESSION['role'] ?? '';
+}
+
+/** Nom du rôle traduit, pour l'affichage. */
+function role_affiche() {
+    $r = role_actuel();
+    if ($r === '') { return ''; }
+    return t('role.' . $r);
 }
 
 function est_admin() {
@@ -38,23 +45,14 @@ function est_connecte() {
    IDENTITÉ DE L'UTILISATEUR
    ------------------------------------------------------------ */
 
-/**
- * Nom lisible : "Naël Fleaura" si prénom et nom sont renseignés,
- * sinon on retombe sur l'identifiant de connexion.
- */
 function nom_affiche() {
-    $prenom = trim($_SESSION['prenom'] ?? '');
-    $nom    = trim($_SESSION['nom_famille'] ?? '');
+    $prenom  = trim($_SESSION['prenom'] ?? '');
+    $nom     = trim($_SESSION['nom_famille'] ?? '');
     $complet = trim($prenom . ' ' . $nom);
     return $complet !== '' ? $complet : ($_SESSION['identifiant'] ?? '');
 }
 
-/**
- * Initiales affichées dans le bouton rond du profil.
- * Première lettre du prénom + première lettre du nom.
- * Si l'utilisateur n'a ni prénom ni nom, on prend la première
- * lettre de son identifiant.
- */
+/** Première lettre du prénom + première lettre du nom. */
 function initiales() {
     $prenom = trim($_SESSION['prenom'] ?? '');
     $nom    = trim($_SESSION['nom_famille'] ?? '');
@@ -62,10 +60,8 @@ function initiales() {
     $i = '';
     if ($prenom !== '') { $i .= mb_substr($prenom, 0, 1); }
     if ($nom    !== '') { $i .= mb_substr($nom, 0, 1); }
+    if ($i === '')      { $i  = mb_substr($_SESSION['identifiant'] ?? 'A', 0, 1); }
 
-    if ($i === '') {
-        $i = mb_substr($_SESSION['identifiant'] ?? 'A', 0, 1);
-    }
     return mb_strtoupper($i);
 }
 
@@ -73,14 +69,19 @@ function initiales() {
    CONTRÔLES D'ACCÈS
    ------------------------------------------------------------ */
 
-function exiger_connexion() {
+/**
+ * Il faut être connecté.
+ * $prefixe : '' depuis la racine du site, '../' depuis un sous-dossier.
+ * Le wiki est entièrement privé : même la lecture demande un compte.
+ */
+function exiger_connexion($prefixe = '../') {
     if (!est_connecte()) {
-        header('Location: ../config/login.php');
+        header('Location: ' . $prefixe . 'config/login.php');
         exit;
     }
 }
 
-/** Back-office : éditeur ou admin. Un lecteur repart sur le site. */
+/** Back-office : éditeur ou admin. Un lecteur repart sur l'accueil. */
 function exiger_editeur() {
     exiger_connexion();
     if (!peut_gerer_pages()) {
@@ -100,9 +101,8 @@ function exiger_admin() {
 
 /**
  * PAGES VERROUILLÉES.
- * Une page dont admin_only vaut 1 (la page d'accueil, par exemple)
- * ne peut être modifiée ni supprimée que par un administrateur.
- * $page peut être la ligne complète ou juste la valeur admin_only.
+ * admin_only = 1 -> modification, suppression ET déplacement
+ * réservés à l'administrateur.
  */
 function peut_modifier_page($page) {
     $verrouillee = is_array($page) ? (int)($page['admin_only'] ?? 0) : (int)$page;
@@ -117,16 +117,16 @@ function peut_modifier_page($page) {
    ------------------------------------------------------------ */
 
 function nom_espace() {
-    return est_admin() ? 'ESPACE ADMIN' : 'ESPACE ÉDITEUR';
+    return est_admin() ? t('nav.espace_admin') : t('nav.espace_editeur');
 }
 
 /**
- * Destination juste après la connexion.
- *   admin              -> panneau d'administration
- *   éditeur / lecteur  -> page d'accueil du site
+ * Destination après la connexion.
+ * Tous les rôles arrivent sur la page d'accueil du site ;
+ * le back-office se rejoint ensuite par le bouton profil.
  */
-function destination_apres_connexion($role) {
-    return ($role === 'admin') ? '../admin/dashboard.php' : '../index.php';
+function destination_apres_connexion($role = null) {
+    return '../index.php';
 }
 
 /* ------------------------------------------------------------

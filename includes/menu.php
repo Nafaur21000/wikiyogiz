@@ -2,17 +2,18 @@
 // ============================================================
 //  MENU LATÉRAL PARTAGÉ + BOUTON PROFIL
 //  Inclus par index.php et page.php.
-//  Le menu est reconstruit à chaque chargement depuis la table
-//  `pages` : créer une page = créer une entrée de menu.
 //
-//  Prérequis : $pdo existe déjà.
+//  Le menu est reconstruit à chaque chargement depuis la table
+//  `pages`, dans la langue en cours : champ_page() renvoie le
+//  titre anglais s'il existe, sinon le français.
+//
+//  Prérequis : $pdo existe déjà et config/auth.php est chargé.
 //  $base = préfixe des liens ('' à la racine, '../' ailleurs).
 // ============================================================
 if (!isset($base)) { $base = ''; }
 
-// La page d'accueil est stockée en base comme les autres (pour
-// pouvoir être modifiée), mais elle ne doit pas apparaître dans
-// le menu : on l'exclut par son slug.
+// La page d'accueil est stockée en base comme les autres, mais
+// elle ne doit pas apparaître dans le menu : on l'exclut.
 $stmt_parents = $pdo->query(
     "SELECT * FROM pages
      WHERE parent_id IS NULL AND slug <> 'accueil'
@@ -20,8 +21,6 @@ $stmt_parents = $pdo->query(
 );
 $menus_principaux = $stmt_parents->fetchAll(PDO::FETCH_ASSOC);
 
-// Les sous-pages, triées elles aussi par leur champ `ordre` :
-// c'est ce qui permet de régler la position des sous-menus.
 $stmt_enfants = $pdo->query(
     "SELECT * FROM pages
      WHERE parent_id IS NOT NULL
@@ -34,25 +33,17 @@ foreach ($sous_pages as $sp) {
     $sous_menus[$sp['parent_id']][] = $sp;
 }
 
-/** Enlève le "S" de MISSIONS à l'affichage, sans toucher à la base. */
-function wy_titre_menu($titre) {
+/**
+ * Titre d'une entrée de menu, dans la langue en cours.
+ * On enlève au passage le "S" de MISSIONS, sans toucher à la base.
+ */
+function wy_titre_menu($page) {
+    $titre = is_array($page) ? champ_page($page, 'titre') : $page;
     $t = strtoupper(trim($titre));
     if ($t === 'MISSIONS & PURPOSE') { return 'MISSION & PURPOSE'; }
     if ($t === 'MISSIONS')           { return 'MISSION'; }
     return $t;
 }
-
-// --- Informations du profil, calculées ici pour alléger le HTML ---
-$connecte    = isset($_SESSION['user_id']);
-$role_visite = $_SESSION['role'] ?? '';
-$a_backoffice = in_array($role_visite, ['admin', 'editeur'], true);
-
-// Initiales : première lettre du prénom + première lettre du nom.
-$ini = '';
-if (!empty($_SESSION['prenom']))      { $ini .= mb_substr($_SESSION['prenom'], 0, 1); }
-if (!empty($_SESSION['nom_famille'])) { $ini .= mb_substr($_SESSION['nom_famille'], 0, 1); }
-if ($ini === '')                      { $ini = mb_substr($_SESSION['identifiant'] ?? 'P', 0, 1); }
-$ini = mb_strtoupper($ini);
 ?>
 <!-- ================== MENU LATÉRAL ================== -->
 <aside class="menu" id="sideMenu">
@@ -64,7 +55,7 @@ $ini = mb_strtoupper($ini);
 
     <nav class="menu-nav">
         <?php foreach ($menus_principaux as $menu):
-            $titre_menu    = wy_titre_menu($menu['titre']);
+            $titre_menu    = wy_titre_menu($menu);
             $a_des_enfants = isset($sous_menus[$menu['id']]);
             ?>
             <div class="menu-group">
@@ -74,10 +65,12 @@ $ini = mb_strtoupper($ini);
                         <span class="arrow">&#9660;</span>
                     </a>
                     <div class="submenu">
-                        <a href="<?php echo $base; ?>page.php?slug=<?php echo urlencode($menu['slug']); ?>" class="submenu-item-oswald">OVERVIEW</a>
+                        <a href="<?php echo $base; ?>page.php?slug=<?php echo urlencode($menu['slug']); ?>" class="submenu-item-oswald">
+                            <?php echo te('nav.overview'); ?>
+                        </a>
                         <?php foreach ($sous_menus[$menu['id']] as $sous_item): ?>
                             <a href="<?php echo $base; ?>page.php?slug=<?php echo urlencode($sous_item['slug']); ?>" class="submenu-item-nunito">
-                                <?php echo htmlspecialchars(wy_titre_menu($sous_item['titre'])); ?>
+                                <?php echo htmlspecialchars(wy_titre_menu($sous_item)); ?>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -91,34 +84,42 @@ $ini = mb_strtoupper($ini);
     </nav>
 </aside>
 
-<button class="menu-toggle" id="menuToggle" aria-label="Ouvrir ou fermer le menu">&#9776;</button>
+<button class="menu-toggle" id="menuToggle" aria-label="<?php echo te('nav.ouvrir_menu'); ?>">&#9776;</button>
 
 <!-- ================== BOUTON PROFIL ==================
-     Visiteur           : lien direct vers la connexion.
-     Connecté           : rond avec les initiales, qui ouvre un
-                          petit menu (panneau admin + déconnexion).
+     Rond avec les initiales. Il ouvre le menu identité,
+     changement de langue, mot de passe et déconnexion.
      ==================================================== -->
 <div class="profil-zone" id="profilZone">
-    <?php if ($connecte): ?>
-        <button type="button" class="profil" id="profilBouton" title="<?php echo htmlspecialchars(trim(($_SESSION['prenom'] ?? '') . ' ' . ($_SESSION['nom_famille'] ?? ''))); ?>">
-            <?php echo htmlspecialchars($ini); ?>
+    <?php if (est_connecte()): ?>
+        <button type="button" class="profil" id="profilBouton" title="<?php echo htmlspecialchars(nom_affiche()); ?>">
+            <?php echo htmlspecialchars(initiales()); ?>
         </button>
 
         <div class="profil-menu" id="profilMenu">
             <div class="profil-entete">
-                <strong><?php echo htmlspecialchars(trim(($_SESSION['prenom'] ?? '') . ' ' . ($_SESSION['nom_famille'] ?? '')) ?: ($_SESSION['identifiant'] ?? '')); ?></strong>
-                <span><?php echo htmlspecialchars($role_visite); ?></span>
+                <strong><?php echo htmlspecialchars(nom_affiche()); ?></strong>
+                <span><?php echo htmlspecialchars(role_affiche()); ?></span>
             </div>
 
-            <?php if ($a_backoffice): ?>
+            <?php if (peut_gerer_pages()): ?>
                 <a href="<?php echo $base; ?>admin/dashboard.php">
-                    <?php echo $role_visite === 'admin' ? 'Panneau admin' : 'Espace éditeur'; ?>
+                    <?php echo est_admin() ? te('nav.panneau_admin') : te('nav.espace_editeur'); ?>
                 </a>
             <?php endif; ?>
 
-            <a href="<?php echo $base; ?>config/logout.php" class="profil-deconnexion">Se déconnecter</a>
+            <!-- BASCULE DE LANGUE
+                 url_langue() reconstruit l'adresse de la page en cours
+                 avec l'autre langue : on ne perd pas la page consultée. -->
+            <a href="<?php echo htmlspecialchars(url_langue(autre_langue())); ?>" class="profil-langue">
+                <span class="drapeau"><?php echo autre_langue() === 'en' ? 'EN' : 'FR'; ?></span>
+                <?php echo htmlspecialchars(nom_langue(autre_langue())); ?>
+            </a>
+
+            <a href="<?php echo $base; ?>config/profil.php"><?php echo te('profil.mon_mdp'); ?></a>
+            <a href="<?php echo $base; ?>config/logout.php" class="profil-deconnexion"><?php echo te('profil.deconnexion'); ?></a>
         </div>
     <?php else: ?>
-        <a href="<?php echo $base; ?>config/login.php" class="profil" title="Connexion">P</a>
+        <a href="<?php echo $base; ?>config/login.php" class="profil" title="<?php echo te('conn.titre'); ?>">P</a>
     <?php endif; ?>
 </div>
