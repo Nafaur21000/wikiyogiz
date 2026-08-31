@@ -1,12 +1,12 @@
 <?php
 // ============================================================
-//  SÉCURITÉ ET RÔLES
+//  SÉCURITÉ, RÔLES ET IDENTITÉ
 //  Inclus en première ligne de chaque page d'administration.
 //
 //  TROIS RÔLES :
 //    lecteur  -> lit les pages publiques, aucun accès au back-office
-//    editeur  -> crée / modifie / supprime les pages
-//    admin    -> tout ça, plus la gestion des utilisateurs
+//    editeur  -> crée / modifie / supprime les pages ordinaires
+//    admin    -> tout ça, plus les utilisateurs et les pages verrouillées
 // ============================================================
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -17,7 +17,6 @@ if (session_status() === PHP_SESSION_NONE) {
    LECTURE DU RÔLE
    ------------------------------------------------------------ */
 
-/** Renvoie le rôle de l'utilisateur connecté, ou '' si visiteur. */
 function role_actuel() {
     return $_SESSION['role'] ?? '';
 }
@@ -36,10 +35,44 @@ function est_connecte() {
 }
 
 /* ------------------------------------------------------------
+   IDENTITÉ DE L'UTILISATEUR
+   ------------------------------------------------------------ */
+
+/**
+ * Nom lisible : "Naël Fleaura" si prénom et nom sont renseignés,
+ * sinon on retombe sur l'identifiant de connexion.
+ */
+function nom_affiche() {
+    $prenom = trim($_SESSION['prenom'] ?? '');
+    $nom    = trim($_SESSION['nom_famille'] ?? '');
+    $complet = trim($prenom . ' ' . $nom);
+    return $complet !== '' ? $complet : ($_SESSION['identifiant'] ?? '');
+}
+
+/**
+ * Initiales affichées dans le bouton rond du profil.
+ * Première lettre du prénom + première lettre du nom.
+ * Si l'utilisateur n'a ni prénom ni nom, on prend la première
+ * lettre de son identifiant.
+ */
+function initiales() {
+    $prenom = trim($_SESSION['prenom'] ?? '');
+    $nom    = trim($_SESSION['nom_famille'] ?? '');
+
+    $i = '';
+    if ($prenom !== '') { $i .= mb_substr($prenom, 0, 1); }
+    if ($nom    !== '') { $i .= mb_substr($nom, 0, 1); }
+
+    if ($i === '') {
+        $i = mb_substr($_SESSION['identifiant'] ?? 'A', 0, 1);
+    }
+    return mb_strtoupper($i);
+}
+
+/* ------------------------------------------------------------
    CONTRÔLES D'ACCÈS
    ------------------------------------------------------------ */
 
-/** Porte d'entrée : il faut être connecté. */
 function exiger_connexion() {
     if (!est_connecte()) {
         header('Location: ../config/login.php');
@@ -47,11 +80,7 @@ function exiger_connexion() {
     }
 }
 
-/**
- * Accès au back-office : éditeur ou admin.
- * Un lecteur connecté est renvoyé vers le site public, sans message
- * d'erreur : il n'a simplement rien à faire ici.
- */
+/** Back-office : éditeur ou admin. Un lecteur repart sur le site. */
 function exiger_editeur() {
     exiger_connexion();
     if (!peut_gerer_pages()) {
@@ -60,7 +89,7 @@ function exiger_editeur() {
     }
 }
 
-/** Réservé aux administrateurs (gestion des utilisateurs). */
+/** Réservé aux administrateurs. */
 function exiger_admin() {
     exiger_connexion();
     if (!est_admin()) {
@@ -69,22 +98,32 @@ function exiger_admin() {
     }
 }
 
+/**
+ * PAGES VERROUILLÉES.
+ * Une page dont admin_only vaut 1 (la page d'accueil, par exemple)
+ * ne peut être modifiée ni supprimée que par un administrateur.
+ * $page peut être la ligne complète ou juste la valeur admin_only.
+ */
+function peut_modifier_page($page) {
+    $verrouillee = is_array($page) ? (int)($page['admin_only'] ?? 0) : (int)$page;
+    if ($verrouillee === 1) {
+        return est_admin();
+    }
+    return peut_gerer_pages();
+}
+
 /* ------------------------------------------------------------
    AFFICHAGE
    ------------------------------------------------------------ */
 
-/**
- * Titre du menu latéral du back-office.
- * L'éditeur voit "ESPACE ÉDITEUR", l'administrateur "ESPACE ADMIN".
- */
 function nom_espace() {
     return est_admin() ? 'ESPACE ADMIN' : 'ESPACE ÉDITEUR';
 }
 
 /**
- * Où envoyer l'utilisateur juste après sa connexion.
- *   admin              -> le panneau d'administration
- *   éditeur / lecteur  -> la page d'accueil du site
+ * Destination juste après la connexion.
+ *   admin              -> panneau d'administration
+ *   éditeur / lecteur  -> page d'accueil du site
  */
 function destination_apres_connexion($role) {
     return ($role === 'admin') ? '../admin/dashboard.php' : '../index.php';
@@ -94,7 +133,6 @@ function destination_apres_connexion($role) {
    FABRICATION DES URL DE PAGES
    ------------------------------------------------------------ */
 
-/** "Missions & Purpose" -> "missions-purpose" */
 function creer_slug($titre) {
     $slug = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $titre);
     $slug = strtolower($slug);
@@ -103,7 +141,6 @@ function creer_slug($titre) {
     return $slug !== '' ? $slug : 'page';
 }
 
-/** Ajoute -2, -3... tant que le slug est déjà pris (colonne UNIQUE). */
 function slug_unique(PDO $pdo, $slug, $id_exclu = null) {
     $base = $slug;
     $i = 1;

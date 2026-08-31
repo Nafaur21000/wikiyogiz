@@ -1,14 +1,32 @@
 <?php
-/**
- * MENU LATÉRAL PARTAGÉ
- * Inclus par index.php et page.php. Attend que $pdo existe déjà.
- */
+// ============================================================
+//  MENU LATÉRAL PARTAGÉ + BOUTON PROFIL
+//  Inclus par index.php et page.php.
+//  Le menu est reconstruit à chaque chargement depuis la table
+//  `pages` : créer une page = créer une entrée de menu.
+//
+//  Prérequis : $pdo existe déjà.
+//  $base = préfixe des liens ('' à la racine, '../' ailleurs).
+// ============================================================
 if (!isset($base)) { $base = ''; }
 
-$stmt_parents = $pdo->query("SELECT * FROM pages WHERE parent_id IS NULL ORDER BY ordre ASC, date_creation DESC");
+// La page d'accueil est stockée en base comme les autres (pour
+// pouvoir être modifiée), mais elle ne doit pas apparaître dans
+// le menu : on l'exclut par son slug.
+$stmt_parents = $pdo->query(
+    "SELECT * FROM pages
+     WHERE parent_id IS NULL AND slug <> 'accueil'
+     ORDER BY ordre ASC, date_creation DESC"
+);
 $menus_principaux = $stmt_parents->fetchAll(PDO::FETCH_ASSOC);
 
-$stmt_enfants = $pdo->query("SELECT * FROM pages WHERE parent_id IS NOT NULL ORDER BY ordre ASC, titre ASC");
+// Les sous-pages, triées elles aussi par leur champ `ordre` :
+// c'est ce qui permet de régler la position des sous-menus.
+$stmt_enfants = $pdo->query(
+    "SELECT * FROM pages
+     WHERE parent_id IS NOT NULL
+     ORDER BY ordre ASC, titre ASC"
+);
 $sous_pages = $stmt_enfants->fetchAll(PDO::FETCH_ASSOC);
 
 $sous_menus = [];
@@ -16,13 +34,25 @@ foreach ($sous_pages as $sp) {
     $sous_menus[$sp['parent_id']][] = $sp;
 }
 
-/** Enlève le "S" de MISSIONS dans l'affichage du menu */
+/** Enlève le "S" de MISSIONS à l'affichage, sans toucher à la base. */
 function wy_titre_menu($titre) {
     $t = strtoupper(trim($titre));
     if ($t === 'MISSIONS & PURPOSE') { return 'MISSION & PURPOSE'; }
     if ($t === 'MISSIONS')           { return 'MISSION'; }
     return $t;
 }
+
+// --- Informations du profil, calculées ici pour alléger le HTML ---
+$connecte    = isset($_SESSION['user_id']);
+$role_visite = $_SESSION['role'] ?? '';
+$a_backoffice = in_array($role_visite, ['admin', 'editeur'], true);
+
+// Initiales : première lettre du prénom + première lettre du nom.
+$ini = '';
+if (!empty($_SESSION['prenom']))      { $ini .= mb_substr($_SESSION['prenom'], 0, 1); }
+if (!empty($_SESSION['nom_famille'])) { $ini .= mb_substr($_SESSION['nom_famille'], 0, 1); }
+if ($ini === '')                      { $ini = mb_substr($_SESSION['identifiant'] ?? 'P', 0, 1); }
+$ini = mb_strtoupper($ini);
 ?>
 <!-- ================== MENU LATÉRAL ================== -->
 <aside class="menu" id="sideMenu">
@@ -63,18 +93,32 @@ function wy_titre_menu($titre) {
 
 <button class="menu-toggle" id="menuToggle" aria-label="Ouvrir ou fermer le menu">&#9776;</button>
 
-<?php if (isset($_SESSION['user_id'])): ?>
-    <?php
-    // Destination du bouton profil selon le rôle :
-    //   admin / éditeur -> le back-office
-    //   lecteur         -> déconnexion (il n'a pas de back-office)
-    $lien_profil = in_array($_SESSION['role'] ?? '', ['admin', 'editeur'], true)
-        ? $base . 'admin/dashboard.php'
-        : $base . 'config/logout.php';
-    ?>
-    <a href="<?php echo $lien_profil; ?>" class="profil" title="<?php echo htmlspecialchars($_SESSION['nom'] ?? ''); ?>">
-        <?php echo strtoupper(substr($_SESSION['nom'] ?? 'A', 0, 1)); ?>
-    </a>
-<?php else: ?>
-    <a href="<?php echo $base; ?>config/login.php" class="profil" title="Connexion">P</a>
-<?php endif; ?>
+<!-- ================== BOUTON PROFIL ==================
+     Visiteur           : lien direct vers la connexion.
+     Connecté           : rond avec les initiales, qui ouvre un
+                          petit menu (panneau admin + déconnexion).
+     ==================================================== -->
+<div class="profil-zone" id="profilZone">
+    <?php if ($connecte): ?>
+        <button type="button" class="profil" id="profilBouton" title="<?php echo htmlspecialchars(trim(($_SESSION['prenom'] ?? '') . ' ' . ($_SESSION['nom_famille'] ?? ''))); ?>">
+            <?php echo htmlspecialchars($ini); ?>
+        </button>
+
+        <div class="profil-menu" id="profilMenu">
+            <div class="profil-entete">
+                <strong><?php echo htmlspecialchars(trim(($_SESSION['prenom'] ?? '') . ' ' . ($_SESSION['nom_famille'] ?? '')) ?: ($_SESSION['identifiant'] ?? '')); ?></strong>
+                <span><?php echo htmlspecialchars($role_visite); ?></span>
+            </div>
+
+            <?php if ($a_backoffice): ?>
+                <a href="<?php echo $base; ?>admin/dashboard.php">
+                    <?php echo $role_visite === 'admin' ? 'Panneau admin' : 'Espace éditeur'; ?>
+                </a>
+            <?php endif; ?>
+
+            <a href="<?php echo $base; ?>config/logout.php" class="profil-deconnexion">Se déconnecter</a>
+        </div>
+    <?php else: ?>
+        <a href="<?php echo $base; ?>config/login.php" class="profil" title="Connexion">P</a>
+    <?php endif; ?>
+</div>

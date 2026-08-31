@@ -1,11 +1,16 @@
 <?php
+// ============================================================
+//  AFFICHAGE D'UNE PAGE DU WIKI
+//  Une seule page PHP affiche un nombre illimité d'articles :
+//  ce qui change, c'est le slug passé dans l'URL.
+// ============================================================
 session_start();
 require_once 'config/link_bdd_php.php';
 
 $base = '';
 $slug = isset($_GET['slug']) ? trim($_GET['slug']) : '';
 
-if ($slug === '') {
+if ($slug === '' || $slug === 'accueil') {
     header('Location: index.php');
     exit;
 }
@@ -38,8 +43,13 @@ if (!$page) {
 <main class="contenu-central page-mode" id="mainContent">
     <article class="page-article">
         <h1 class="page-title"><?php echo htmlspecialchars(wy_titre_menu($page_titre)); ?></h1>
+
         <div class="page-content">
-            <?php echo $page_contenu; ?>
+            <?php
+            // Pas de htmlspecialchars : le contenu vient de l'éditeur
+            // et doit être interprété comme du HTML.
+            echo $page_contenu;
+            ?>
         </div>
     </article>
 </main>

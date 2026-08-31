@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    /* ---- MENUS DÉFILANTS ---- */
+    /* ---- MENUS DÉFILANTS (sous-menus du site) ---- */
     document.querySelectorAll('.toggle-submenu').forEach(function (toggle) {
         toggle.addEventListener('click', function (event) {
             event.preventDefault();
@@ -21,12 +21,42 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    /* ---- CONFIRMATION AVANT SUPPRESSION ---- */
+    /* ---- MENU DU BOUTON PROFIL ----
+       Le rond n'est plus un simple lien : il ouvre un petit menu
+       contenant "Panneau admin" et "Se déconnecter". */
+    const profilBouton = document.getElementById('profilBouton');
+    const profilMenu   = document.getElementById('profilMenu');
+
+    if (profilBouton && profilMenu) {
+        profilBouton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            profilMenu.classList.toggle('ouvert');
+        });
+
+        // Un clic ailleurs sur la page referme le menu
+        document.addEventListener('click', function () {
+            profilMenu.classList.remove('ouvert');
+        });
+
+        // La touche Échap aussi
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { profilMenu.classList.remove('ouvert'); }
+        });
+    }
+
+    /* ---- CONFIRMATION AVANT SUPPRESSION (back-office) ---- */
     document.querySelectorAll('[data-confirm]').forEach(function (el) {
         el.addEventListener('click', function (e) {
+            if (this.classList.contains('inactif')) { e.preventDefault(); return; }
             if (!confirm(this.getAttribute('data-confirm'))) {
                 e.preventDefault();
             }
         });
+    });
+
+    /* ---- FLÈCHES D'ORDRE DÉSACTIVÉES ----
+       Une flèche en bout de liste ne doit rien déclencher. */
+    document.querySelectorAll('.btn-fleche.inactif').forEach(function (el) {
+        el.addEventListener('click', function (e) { e.preventDefault(); });
     });
 });

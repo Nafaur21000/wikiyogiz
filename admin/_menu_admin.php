@@ -1,8 +1,7 @@
 <?php
 // ============================================================
 //  MENU LATÉRAL DU BACK-OFFICE
-//  Le titre s'adapte au rôle : ESPACE ADMIN ou ESPACE ÉDITEUR.
-//  L'entrée "Utilisateurs" n'apparaît que pour les administrateurs.
+//  Titre adapté au rôle, entrée "Utilisateurs" réservée à l'admin.
 // ============================================================
 ?>
 <aside class="menu">
@@ -20,5 +19,10 @@
         <a href="../index.php" class="menu-item">Voir le site</a>
     </nav>
 
-    <a href="../config/logout.php" class="menu-item" style="margin-top:auto; color:#ff9b9b;">Déconnexion</a>
+    <div class="menu-utilisateur">
+        <span class="pastille-initiales"><?php echo htmlspecialchars(initiales()); ?></span>
+        <span><?php echo htmlspecialchars(nom_affiche()); ?></span>
+    </div>
+
+    <a href="../config/logout.php" class="menu-item" style="color:#ff9b9b;">Déconnexion</a>
 </aside>

@@ -1,23 +1,23 @@
 <?php
 // ============================================================
 //  PANNEAU D'ADMINISTRATION (accueil du back-office)
-//  Accessible aux éditeurs et aux administrateurs.
-//  Un lecteur qui arriverait ici est renvoyé sur le site public.
+//  Ouvert aux éditeurs et aux administrateurs.
 // ============================================================
 require_once '../config/auth.php';
 require_once '../config/link_bdd_php.php';
 exiger_editeur();
 
-$nb_pages = (int)$pdo->query("SELECT COUNT(*) FROM pages")->fetchColumn();
-$nb_menus = (int)$pdo->query("SELECT COUNT(*) FROM pages WHERE parent_id IS NULL")->fetchColumn();
+$nb_pages = (int)$pdo->query("SELECT COUNT(*) FROM pages WHERE slug <> 'accueil'")->fetchColumn();
+$nb_menus = (int)$pdo->query("SELECT COUNT(*) FROM pages WHERE parent_id IS NULL AND slug <> 'accueil'")->fetchColumn();
 
-// Le compte des utilisateurs n'a de sens que pour un administrateur.
 $nb_users = est_admin()
     ? (int)$pdo->query("SELECT COUNT(*) FROM utilisateurs")->fetchColumn()
     : null;
 
-$dernieres = $pdo->query("SELECT titre, slug, date_creation FROM pages ORDER BY date_creation DESC LIMIT 5")
-                 ->fetchAll(PDO::FETCH_ASSOC);
+$dernieres = $pdo->query(
+    "SELECT id, titre, slug, date_creation FROM pages
+     WHERE slug <> 'accueil' ORDER BY date_creation DESC LIMIT 5"
+)->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -33,13 +33,13 @@ $dernieres = $pdo->query("SELECT titre, slug, date_creation FROM pages ORDER BY 
 
 <main class="admin-main">
     <h1><?php echo nom_espace(); ?></h1>
-    <p>Bienvenue, <strong><?php echo htmlspecialchars($_SESSION['nom'] ?? ''); ?></strong>
+    <p>Bienvenue, <strong><?php echo htmlspecialchars(nom_affiche()); ?></strong>
        — rôle : <?php echo htmlspecialchars(role_actuel()); ?>.</p>
 
     <div class="admin-card">
         <h2>En un coup d'&oelig;il</h2>
         <p>
-            <strong><?php echo $nb_pages; ?></strong> page(s) au total,
+            <strong><?php echo $nb_pages; ?></strong> page(s),
             dont <strong><?php echo $nb_menus; ?></strong> en menu principal.
             <?php if ($nb_users !== null): ?>
                 <strong><?php echo $nb_users; ?></strong> utilisateur(s).
@@ -66,7 +66,10 @@ $dernieres = $pdo->query("SELECT titre, slug, date_creation FROM pages ORDER BY 
                     <tr>
                         <td><?php echo htmlspecialchars($d['titre']); ?></td>
                         <td><?php echo htmlspecialchars($d['date_creation']); ?></td>
-                        <td><a href="../page.php?slug=<?php echo urlencode($d['slug']); ?>" class="btn btn-small" target="_blank">Voir</a></td>
+                        <td>
+                            <a href="editeur_page.php?id=<?php echo $d['id']; ?>" class="btn btn-small">Modifier</a>
+                            <a href="../page.php?slug=<?php echo urlencode($d['slug']); ?>" class="btn btn-small" target="_blank">Voir</a>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

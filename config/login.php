@@ -1,14 +1,16 @@
 <?php
 // ============================================================
 //  CONNEXION
-//  La destination après connexion dépend du rôle :
+//  nom_utilisateur = IDENTIFIANT de connexion.
+//  prenom et nom servent à l'affichage et aux initiales.
+//
+//  Destination après connexion :
 //    admin             -> panneau d'administration
 //    éditeur / lecteur -> page d'accueil du site
 // ============================================================
 require_once 'auth.php';
 require_once 'link_bdd_php.php';
 
-// Déjà connecté : on n'affiche pas le formulaire une seconde fois.
 if (est_connecte()) {
     header('Location: ' . destination_apres_connexion(role_actuel()));
     exit;
@@ -17,20 +19,25 @@ if (est_connecte()) {
 $erreur = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $user = trim($_POST['username']);
-    $pass = $_POST['password'];
+    $identifiant = trim($_POST['username']);
+    $pass        = $_POST['password'];
 
     $stmt = $pdo->prepare("SELECT * FROM utilisateurs WHERE nom_utilisateur = ?");
-    $stmt->execute([$user]);
-    $utilisateur = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->execute([$identifiant]);
+    $u = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($utilisateur && password_verify($pass, $utilisateur['mot_de_passe'])) {
+    if ($u && password_verify($pass, $u['mot_de_passe'])) {
         session_regenerate_id(true);
-        $_SESSION['user_id'] = $utilisateur['id'];
-        $_SESSION['role']    = $utilisateur['role'];
-        $_SESSION['nom']     = $utilisateur['nom_utilisateur'];
 
-        header('Location: ' . destination_apres_connexion($utilisateur['role']));
+        $_SESSION['user_id']     = $u['id'];
+        $_SESSION['role']        = $u['role'];
+        $_SESSION['identifiant'] = $u['nom_utilisateur'];
+        // Les colonnes prenom/nom peuvent ne pas exister sur une
+        // base pas encore migrée : ?? '' évite toute erreur.
+        $_SESSION['prenom']      = $u['prenom'] ?? '';
+        $_SESSION['nom_famille'] = $u['nom'] ?? '';
+
+        header('Location: ' . destination_apres_connexion($u['role']));
         exit;
     }
     $erreur = "Identifiants incorrects.";
@@ -44,11 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Connexion - WikiYogiz</title>
     <link rel="stylesheet" href="../style/style.css">
 </head>
-<body style="display:flex; justify-content:center; align-items:center; min-height:100vh;">
+<body class="page-connexion">
 
-    <div style="background:white; padding:40px; border-radius:15px; width:340px;">
-        <img src="../images/logo-contour.png" alt="WikiYogiz" style="width:100%; max-width:180px; display:block; margin:0 auto 20px;">
-        <h2 style="text-align:center; margin-top:0;">CONNEXION</h2>
+    <div class="carte-connexion">
+        <!-- Logo réduit : 90px au lieu de 180px -->
+        <img src="../images/logo-contour.png" alt="WikiYogiz" class="logo-connexion">
+        <h2>CONNEXION</h2>
 
         <?php if ($erreur): ?>
             <div class="alert alert-error"><?php echo htmlspecialchars($erreur); ?></div>
@@ -57,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST" class="form-admin">
             <div>
                 <label for="username">Identifiant</label>
-                <input type="text" id="username" name="username" required>
+                <input type="text" id="username" name="username" required autofocus>
             </div>
             <div>
                 <label for="password">Mot de passe</label>

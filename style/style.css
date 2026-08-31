@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,700;1,300&family=Oswald:wght@400;500;700&display=swap');
 
-/* PALETTE SUPERYOGIZ */
+/* ============================================================
+   PALETTE SUPERYOGIZ
+   ============================================================ */
 :root {
     --violet: #654178;
     --violet-fonce: #4a2e5d;
@@ -30,11 +32,12 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: 0.5px;
 }
 
-/* ===== MENU LATÉRAL ===== */
+/* ============================================================
+   MENU LATÉRAL
+   ============================================================ */
 .menu {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
     width: var(--largeur-menu);
     height: 100vh;
     background-color: var(--violet);
@@ -42,7 +45,7 @@ h1, h2, h3, h4, h5, h6 {
     padding: 30px 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
     z-index: 100;
     overflow-y: auto;
     transition: transform 0.3s ease;
@@ -64,25 +67,20 @@ h1, h2, h3, h4, h5, h6 {
 }
 .site-title {
     font-family: 'Oswald', sans-serif;
-    font-size: 1.7rem;
+    font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: 2px;
     color: white;
     text-align: center;
 }
 
-.menu-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 10px;
-}
+.menu-nav { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 
 .menu-item {
     color: white;
     text-decoration: none;
     font-family: 'Oswald', sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     text-transform: uppercase;
     display: block;
     padding: 4px 0;
@@ -90,7 +88,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 .menu-item:hover { color: var(--bleu); }
 
-/* ===== MENU DÉFILANT ===== */
+/* Bloc identité en bas du menu admin */
+.menu-utilisateur {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    color: var(--bleu);
+    border-top: 1px solid rgba(255,255,255,0.2);
+    padding-top: 15px;
+}
+
+/* ============================================================
+   SOUS-MENUS
+   ============================================================ */
 .toggle-submenu {
     display: flex;
     justify-content: space-between;
@@ -98,10 +111,7 @@ h1, h2, h3, h4, h5, h6 {
     gap: 10px;
     cursor: pointer;
 }
-.arrow {
-    font-size: 0.75rem;
-    transition: transform 0.3s ease;
-}
+.arrow { font-size: 0.75rem; transition: transform 0.3s ease; }
 .menu-group.open .arrow { transform: rotate(180deg); }
 
 .submenu {
@@ -114,11 +124,7 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 0;
     transition: max-height 0.4s ease, opacity 0.4s ease, margin-top 0.4s ease;
 }
-.menu-group.open .submenu {
-    max-height: 600px;
-    opacity: 1;
-    margin-top: 8px;
-}
+.menu-group.open .submenu { max-height: 700px; opacity: 1; margin-top: 8px; }
 
 /* OVERVIEW = OSWALD */
 .submenu-item-oswald {
@@ -144,31 +150,87 @@ h1, h2, h3, h4, h5, h6 {
 }
 .submenu-item-nunito:hover { color: white; }
 
-/* ===== BOUTON PROFIL EN CERCLE ===== */
-.profil {
+/* ============================================================
+   BOUTON PROFIL ET SON MENU
+   ============================================================ */
+.profil-zone {
     position: fixed;
-    top: 20px;
-    right: 40px;
+    top: 20px; right: 40px;
+    z-index: 120;
+}
+
+.profil {
     width: 60px;
     height: 60px;
     border-radius: 50%;
     background-color: var(--violet);
     color: white;
     font-family: 'Oswald', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
     display: flex;
     justify-content: center;
     align-items: center;
     text-decoration: none;
-    z-index: 100;
+    border: none;
+    cursor: pointer;
     transition: transform 0.2s, background-color 0.2s;
 }
-.profil:hover {
-    transform: scale(1.1);
-    background-color: var(--violet-fonce);
+.profil:hover { transform: scale(1.08); background-color: var(--violet-fonce); }
+
+/* Le petit menu qui s'ouvre sous le rond */
+.profil-menu {
+    position: absolute;
+    top: 70px; right: 0;
+    min-width: 210px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    padding: 8px 0;
+    display: none;
+    overflow: hidden;
+}
+.profil-menu.ouvert { display: block; }
+
+.profil-entete {
+    padding: 10px 18px 12px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Nunito', sans-serif;
+}
+.profil-entete strong { color: var(--violet); }
+.profil-entete span { font-size: 0.85rem; color: #888; text-transform: capitalize; }
+
+.profil-menu a {
+    display: block;
+    padding: 12px 18px;
+    color: var(--violet);
+    text-decoration: none;
+    font-family: 'Nunito', sans-serif;
+    transition: background 0.15s;
+}
+.profil-menu a:hover { background: var(--bleu); }
+.profil-menu .profil-deconnexion { color: #c0392b; }
+
+/* Pastille d'initiales, réutilisée dans le back-office */
+.pastille-initiales {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--violet);
+    color: white;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    flex-shrink: 0;
 }
 
-/* ===== OUVRIR / FERMER LE MENU ===== */
+/* ============================================================
+   BOUTON OUVRIR / FERMER LE MENU
+   ============================================================ */
 .menu-toggle {
     position: fixed;
     top: 20px;
@@ -187,7 +249,9 @@ h1, h2, h3, h4, h5, h6 {
 .menu-toggle:hover { background-color: var(--violet-fonce); }
 .menu-toggle.shifted { left: 20px; }
 
-/* ===== ZONE DE CONTENU ===== */
+/* ============================================================
+   ZONE DE CONTENU PUBLIQUE
+   ============================================================ */
 .contenu-central {
     margin-left: var(--largeur-menu);
     width: calc(100% - var(--largeur-menu));
@@ -199,88 +263,54 @@ h1, h2, h3, h4, h5, h6 {
     gap: 30px;
     transition: margin-left 0.3s ease, width 0.3s ease;
 }
-.contenu-central.expanded {
-    margin-left: 0;
-    width: 100%;
-}
-.contenu-central.page-mode {
-    align-items: flex-start;
-    justify-content: flex-start;
-}
+.contenu-central.expanded { margin-left: 0; width: 100%; }
+.contenu-central.page-mode { align-items: flex-start; justify-content: flex-start; }
 
-.accueil-logo {
-    width: 100%;
-    max-width: 320px;
-    height: auto;
-}
+.accueil-logo { width: 100%; max-width: 320px; height: auto; }
 
-.nom-site {
-    font-size: 2.6rem;
-    letter-spacing: 4px;
-    margin: 0;
-    color: var(--violet);
-}
+.nom-site { font-size: 2.6rem; letter-spacing: 4px; margin: 0; color: var(--violet); }
 
-/* TAGLINE SANS RECTANGLE */
 .tagline {
     font-family: 'Oswald', sans-serif;
     font-weight: 500;
     font-size: 1.4rem;
     letter-spacing: 1px;
     color: var(--rose);
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0;
+    background: none; border: none; padding: 0; margin: 0;
     text-align: center;
 }
 
-.image-hobbi {
-    width: 320px;
-    max-width: 80%;
-    height: auto;
-    object-fit: contain;
-}
+.image-hobbi { width: 320px; max-width: 80%; height: auto; object-fit: contain; }
 
-.bloc-objectif {
-    max-width: 750px;
-    text-align: center;
-}
-.bloc-objectif h2 {
-    font-size: 1.6rem;
-    color: var(--vert);
-    margin-bottom: 15px;
-}
-.bloc-objectif p {
-    font-family: 'Nunito', sans-serif;
-    font-size: 1.05rem;
-    line-height: 1.7;
-    margin: 0 0 15px;
-}
+.accueil-contenu { width: 100%; max-width: 800px; }
 
-/* CARRÉ HOBBI SANS OMBRE */
-.hobbi-square {
-    background-color: #ffffff;
+/* ============================================================
+   SECTIONS
+   Blocs créés depuis l'éditeur, utilisés sur l'accueil comme
+   dans les pages. Aucune ombre portée.
+   ============================================================ */
+.wiki-section {
+    background: #ffffff;
     border-radius: 20px;
     padding: 30px 35px;
-    max-width: 750px;
-    width: 100%;
+    margin-bottom: 25px;
     box-shadow: none;
-    filter: none;
     border: none;
 }
-.hobbi-square h2 {
+.wiki-section h2 {
     margin-top: 0;
-    color: var(--violet);
-    font-size: 1.4rem;
+    color: var(--vert);
+    font-size: 1.5rem;
 }
-.hobbi-square p {
+.wiki-section p {
     font-family: 'Nunito', sans-serif;
-    line-height: 1.7;
-    margin-bottom: 0;
+    line-height: 1.75;
 }
+.wiki-section p:last-child { margin-bottom: 0; }
 
-/* ===== PAGES DE CONTENU ===== */
+/* ============================================================
+   PAGES DE CONTENU
+   ============================================================ */
 .page-article {
     background: #ffffff;
     border-radius: 20px;
@@ -295,19 +325,43 @@ h1, h2, h3, h4, h5, h6 {
     border-bottom: 3px solid var(--bleu);
     padding-bottom: 12px;
 }
-.page-content {
-    font-family: 'Nunito', sans-serif;
-    font-size: 1.05rem;
-    line-height: 1.8;
-}
+.page-content { font-family: 'Nunito', sans-serif; font-size: 1.05rem; line-height: 1.8; }
 .page-content h1, .page-content h2, .page-content h3 {
     font-family: 'Oswald', sans-serif;
     color: var(--violet);
 }
 .page-content img { max-width: 100%; height: auto; border-radius: 10px; }
 .page-content a { color: var(--vert); }
+/* Dans une page, les sections n'ont pas besoin d'un second cadre blanc */
+.page-content .wiki-section { background: #f7f9fd; padding: 20px 25px; }
 
-/* ===== ADMINISTRATION ===== */
+/* ============================================================
+   PAGE DE CONNEXION
+   ============================================================ */
+.page-connexion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+.carte-connexion {
+    background: white;
+    padding: 35px 40px;
+    border-radius: 15px;
+    width: 340px;
+}
+.carte-connexion h2 { text-align: center; margin-top: 0; }
+/* Logo réduit, comme demandé */
+.logo-connexion {
+    width: 90px;
+    height: auto;
+    display: block;
+    margin: 0 auto 15px;
+}
+
+/* ============================================================
+   BACK-OFFICE
+   ============================================================ */
 .admin-body { background-color: #f4f6fa; }
 .admin-main {
     margin-left: var(--largeur-menu);
@@ -315,12 +369,8 @@ h1, h2, h3, h4, h5, h6 {
     min-height: 100vh;
     padding: 50px;
 }
-.admin-card {
-    background: white;
-    border-radius: 15px;
-    padding: 30px;
-    margin-bottom: 30px;
-}
+.admin-card { background: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; }
+
 .admin-table {
     width: 100%;
     border-collapse: collapse;
@@ -337,16 +387,15 @@ h1, h2, h3, h4, h5, h6 {
     padding: 14px;
     font-weight: 500;
 }
-.admin-table td {
-    padding: 12px 14px;
-    border-bottom: 1px solid #e6e6e6;
-}
+.admin-table td { padding: 12px 14px; border-bottom: 1px solid #e6e6e6; vertical-align: middle; }
 .admin-table tr:last-child td { border-bottom: none; }
+.ligne-accueil { background: #fdf6e3; }
+
 .badge {
     display: inline-block;
     padding: 3px 10px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     background: var(--bleu);
     color: var(--violet);
 }
@@ -369,12 +418,14 @@ h1, h2, h3, h4, h5, h6 {
 .btn-danger { background: #c0392b; }
 .btn-danger:hover { background: #96271b; }
 .btn-small { padding: 6px 12px; font-size: 0.9rem; }
+.btn-fleche { padding: 6px 10px; background: #7a7a8c; }
+.btn-fleche.inactif { opacity: 0.3; cursor: default; }
 
 .form-admin {
     display: flex;
     flex-direction: column;
     gap: 18px;
-    max-width: 900px;
+    max-width: 1000px;
     font-family: 'Nunito', sans-serif;
 }
 .form-admin label {
@@ -398,24 +449,142 @@ h1, h2, h3, h4, h5, h6 {
     font-family: 'Nunito', sans-serif;
     font-size: 1rem;
 }
-.alert {
-    padding: 14px 18px;
-    border-radius: 8px;
+.form-admin small { display: block; margin-top: 5px; color: #777; font-size: 0.85rem; }
+
+.ligne-champs { display: flex; gap: 20px; flex-wrap: wrap; }
+.ligne-champs > div { flex: 1; min-width: 180px; }
+
+.form-ligne { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.form-ligne input, .form-ligne select {
+    padding: 7px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     font-family: 'Nunito', sans-serif;
-    margin-bottom: 20px;
 }
+
+.alert { padding: 14px 18px; border-radius: 8px; font-family: 'Nunito', sans-serif; margin-bottom: 20px; }
 .alert-ok    { background: #e2f5e6; color: #1e6b2c; }
 .alert-error { background: #fbe3e0; color: #a02a1c; }
 
-/* ===== RESPONSIVE ===== */
+/* ============================================================
+   ÉDITEUR DE PAGE
+   ============================================================ */
+.editeur {
+    border: 2px solid var(--violet);
+    border-radius: 10px;
+    overflow: hidden;
+    background: white;
+}
+
+.editeur-barre {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 10px 12px;
+    background: #f0f2f7;
+    border-bottom: 2px solid var(--violet);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+.editeur-groupe {
+    display: flex;
+    gap: 4px;
+    padding-right: 10px;
+    margin-right: 6px;
+    border-right: 1px solid #d4d7e0;
+}
+.editeur-groupe:last-child { border-right: none; }
+
+.editeur-barre button {
+    background: white;
+    border: 1px solid #c9cddb;
+    border-radius: 5px;
+    padding: 7px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    color: var(--violet);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.editeur-barre button:hover { background: var(--bleu); border-color: var(--violet); }
+.editeur-barre button.actif { background: var(--violet); color: white; }
+
+/* LA GRANDE ZONE D'ÉCRITURE */
+.editeur-zone {
+    min-height: 600px;
+    padding: 30px 35px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #333;
+    outline: none;
+    overflow-y: auto;
+    resize: vertical;
+}
+.editeur-zone:focus { background: #fffdf8; }
+.editeur-zone.survol { background: var(--bleu); }
+
+.editeur-zone h2 { font-size: 1.5rem; color: var(--vert); }
+.editeur-zone h3 { font-size: 1.2rem; color: var(--violet); }
+.editeur-zone img { max-width: 100%; height: auto; border-radius: 8px; }
+.editeur-zone a { color: var(--vert); }
+
+/* Les sections sont visibles pendant l'écriture */
+.editeur-zone .wiki-section {
+    border: 2px dashed var(--rose);
+    background: #fdf7fa;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin: 18px 0;
+}
+.editeur-zone .wiki-section::before {
+    content: 'SECTION';
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--rose);
+    margin-bottom: 8px;
+}
+
+.editeur-html {
+    width: 100%;
+    min-height: 600px;
+    padding: 25px;
+    border: none;
+    outline: none;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.editeur-pied {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 18px;
+    background: #f0f2f7;
+    border-top: 1px solid #d4d7e0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    color: #777;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 900px) {
     .contenu-central, .admin-main {
         margin-left: 0;
         width: 100%;
-        padding: 90px 25px 40px;
+        padding: 90px 20px 40px;
     }
     .menu { transform: translateX(-100%); }
     .menu.open-mobile { transform: translateX(0); }
     .menu-toggle { left: 20px; }
-    .profil { right: 20px; width: 50px; height: 50px; font-size: 1.2rem; }
+    .profil-zone { right: 20px; }
+    .profil { width: 50px; height: 50px; font-size: 1.1rem; }
+    .editeur-zone, .editeur-html { min-height: 400px; padding: 20px; }
 }
